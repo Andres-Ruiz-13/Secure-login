@@ -1,0 +1,245 @@
+{
+  "info": {
+    "name": "SECURE API - Laravel",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "secure-api-laravel-0001"
+  },
+  "item": [
+    {
+      "name": "01 Registro",
+      "item": [
+        {
+          "name": "T01 - Registro valido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuario Prueba\",\n  \"email\": \"usuario@test.com\",\n  \"password\": \"Segura123\",\n  \"password_confirmation\": \"Segura123\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"]}
+          }
+        },
+        {
+          "name": "T02 - Email invalido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuario Prueba\",\n  \"email\": \"correo-invalido\",\n  \"password\": \"Segura123\",\n  \"password_confirmation\": \"Segura123\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"]}
+          }
+        },
+        {
+          "name": "T03 - Campos faltantes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Usuario Prueba\"\n}"},
+            "url": {"raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"]}
+          }
+        },
+        {
+          "name": "T04 - Password insuficiente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuario\",\n  \"email\": \"usuario2@test.com\",\n  \"password\": \"123\",\n  \"password_confirmation\": \"123\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"]}
+          }
+        },
+        {
+          "name": "T05 - Email duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuario Prueba\",\n  \"email\": \"usuario@test.com\",\n  \"password\": \"Segura123\",\n  \"password_confirmation\": \"Segura123\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Login",
+      "item": [
+        {
+          "name": "T06 - Login correcto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.environment.set('token', data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@test.com\",\n  \"password\": \"Segura123\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
+          }
+        },
+        {
+          "name": "T07 - Password incorrecta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@test.com\",\n  \"password\": \"ContraseñaIncorrecta\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
+          }
+        },
+        {
+          "name": "T08 - Usuario inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noexiste@test.com\",\n  \"password\": \"Segura123\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
+          }
+        },
+        {
+          "name": "T14 - Solicitudes repetitivas (ejecutar 6+ veces seguidas)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@test.com\",\n  \"password\": \"ContraseñaIncorrecta\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Perfil",
+      "item": [
+        {
+          "name": "T09 - Perfil sin token",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"]}
+          }
+        },
+        {
+          "name": "T10 - Token invalido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer 123456789"}
+            ],
+            "url": {"raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"]}
+          }
+        },
+        {
+          "name": "T11 - Token valido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"]}
+          }
+        },
+        {
+          "name": "T13 - Perfil tras logout (ejecutar despues de T12)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Logout",
+      "item": [
+        {
+          "name": "T12 - Logout con token valido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{base_url}}/api/logout", "host": ["{{base_url}}"], "path": ["api", "logout"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Pruebas de seguridad",
+      "item": [
+        {
+          "name": "Notas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"]},
+            "description": "Carpeta reservada para pruebas adicionales manipuladas (headers alterados, payloads XSS/SQLi de prueba, etc.) que quieras agregar durante el analisis."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://127.0.0.1:8000"},
+    {"key": "token", "value": ""}
+  ]
+}

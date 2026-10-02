@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class TeamMember extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'position',
+        'biography',
+        'photo',
+        'email',
+        'phone',
+        'linkedin_url',
+        'position_order',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+}
