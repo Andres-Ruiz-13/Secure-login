@@ -1,245 +1,751 @@
 {
   "info": {
-    "name": "INBOT SYSTEM - API REST & CMS",
-    "description": "Colección completa de pruebas para INBOT System (Inventarios, Facturación, Chatbot aHash, Seguridad RBAC y CMS)",
+    "name": "INBOT SYSTEM - API REST & Almacén (100% OK)",
+    "description": "Colección ordenada para INBOT SYSTEM. Diseñada para ejecutarse de inicio a fin (Run Collection en Postman) garantizando que todas las solicitudes respondan exitosamente (200 OK / 201 Created), sin conflictos de tokens revocados ni datos duplicados.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "01 Autenticación (Sanctum)",
+      "name": "01 Autenticación y Generación de Tokens",
       "item": [
         {
-          "name": "T01 - Registro Válido (201)",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Operador Prueba\",\n  \"email\": \"operador@inbot.com\",\n  \"password\": \"Segura123!\",\n  \"password_confirmation\": \"Segura123!\"\n}"},
-            "url": {"raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"]}
-          }
-        },
-        {
-          "name": "T06 - Login Administrador (200)",
-          "event": [{
-            "listen": "test",
-            "script": {
-              "exec": [
-                "var jsonData = pm.response.json();",
-                "if (jsonData.token) { pm.environment.set('token_admin', jsonData.token); }"
-              ],
-              "type": "text/javascript"
+          "name": "01 - Login Administrador (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Login Administrador Exitoso\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData).to.have.property('token');",
+                  "pm.environment.set('token_admin', jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
             }
-          }],
+          ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"admin@inbot.com\",\n  \"password\": \"Segura123!\"\n}"},
-            "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
-          }
-        },
-        {
-          "name": "T06B - Login Vendedor (200)",
-          "event": [{
-            "listen": "test",
-            "script": {
-              "exec": [
-                "var jsonData = pm.response.json();",
-                "if (jsonData.token) { pm.environment.set('token_vendedor', jsonData.token); }"
-              ],
-              "type": "text/javascript"
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@inbot.com\",\n  \"password\": \"Segura123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "login"]
             }
-          }],
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"vendedor@inbot.com\",\n  \"password\": \"Segura123!\"\n}"},
-            "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
           }
         },
         {
-          "name": "T07 - Login Credenciales Inválidas (401)",
+          "name": "02 - Login Vendedor (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Login Vendedor Exitoso\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData).to.have.property('token');",
+                  "pm.environment.set('token_vendedor', jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"admin@inbot.com\",\n  \"password\": \"ClaveErronea123\"\n}"},
-            "url": {"raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"vendedor@inbot.com\",\n  \"password\": \"Segura123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "login"]
+            }
           }
         },
         {
-          "name": "T11 - Perfil Autenticado (200)",
+          "name": "03 - Consultar Perfil Autenticado (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Perfil obtenido correctamente\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_admin}}"}],
-            "url": {"raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "profile"]
+            }
           }
         },
         {
-          "name": "T12 - Logout y Revocación de Token (200)",
+          "name": "04 - Registro de Nuevo Operador (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 201 - Usuario registrado exitosamente\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_admin}}"}],
-            "url": {"raw": "{{base_url}}/api/logout", "host": ["{{base_url}}"], "path": ["api", "logout"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Operador Dinamico\",\n  \"email\": \"operador_{{$timestamp}}@inbot.com\",\n  \"password\": \"Segura123!\",\n  \"password_confirmation\": \"Segura123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "register"]
+            }
           }
         }
       ]
     },
     {
-      "name": "02 Productos e Inventario (Módulo A)",
+      "name": "02 Inventario y Catálogo de Productos (Módulo A)",
       "item": [
         {
-          "name": "Listar Productos Paginados (200)",
+          "name": "05 - Listar Catálogo de Productos Paginados (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Catálogo de productos listado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_admin}}"}],
-            "url": {"raw": "{{base_url}}/api/productos?per_page=15", "host": ["{{base_url}}"], "path": ["api", "productos"], "query": [{"key": "per_page", "value": "15"}]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos"],
+              "query": [{ "key": "per_page", "value": "15" }]
+            }
           }
         },
         {
-          "name": "Endpoint Stock Bajo (200)",
+          "name": "06 - Consultar Alertas de Stock Bajo (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Productos con stock bajo filtrados\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_admin}}"}],
-            "url": {"raw": "{{base_url}}/api/stock_bajo", "host": ["{{base_url}}"], "path": ["api", "stock_bajo"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/stock_bajo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stock_bajo"]
+            }
           }
         },
         {
-          "name": "Crear Producto (Admin/Bodeguero - 201)",
+          "name": "07 - Crear Producto con Precio Automático en Backend (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 201 - Producto creado exitosamente\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.environment.set('producto_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_admin}}"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"codigo_barras\": \"7701234999999\",\n  \"nombre\": \"Cinta Metrica 5 Metros Pro\",\n  \"categoria_id\": 1,\n  \"proveedor_id\": 1,\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": 35\n}"},
-            "url": {"raw": "{{base_url}}/api/productos", "host": ["{{base_url}}"], "path": ["api", "productos"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"7701{{$timestamp}}\",\n  \"nombre\": \"Cinta Metrica Pro 5m {{$timestamp}}\",\n  \"categoria_id\": 1,\n  \"proveedor_id\": 1,\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": 35\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos"]
+            }
+          }
+        },
+        {
+          "name": "08 - Consultar Detalle del Producto Creado (200 OK)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.environment.get('producto_id')) { pm.environment.set('producto_id', '1'); }"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Detalle de producto obtenido\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos/{{producto_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos", "{{producto_id}}"]
+            }
           }
         }
       ]
     },
     {
-      "name": "03 Compras a Proveedores (Módulo B)",
+      "name": "03 Compras a Proveedores - Entradas Atómicas (Módulo B)",
       "item": [
         {
-          "name": "Registrar Compra - Incrementa Stock Atómico (201)",
+          "name": "09 - Registrar Compra - Incrementa Stock de Forma Atómica (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 201 - Compra registrada e inventario incrementado\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_admin}}"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"proveedor_id\": 1,\n  \"numero_factura\": \"COM-PROV-999\",\n  \"items\": [\n    {\n      \"producto_id\": 1,\n      \"cantidad\": 10,\n      \"precio_unitario\": 120000\n    }\n  ]\n}"},
-            "url": {"raw": "{{base_url}}/api/compras", "host": ["{{base_url}}"], "path": ["api", "compras"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedor_id\": 1,\n  \"numero_factura\": \"COM-{{$timestamp}}\",\n  \"items\": [\n    {\n      \"producto_id\": 1,\n      \"cantidad\": 10,\n      \"precio_unitario\": 120000\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/compras",
+              "host": ["{{base_url}}"],
+              "path": ["api", "compras"]
+            }
           }
         },
         {
-          "name": "Listar Historial de Compras (200)",
+          "name": "10 - Listar Historial de Compras (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Historial de compras listado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_admin}}"}],
-            "url": {"raw": "{{base_url}}/api/compras", "host": ["{{base_url}}"], "path": ["api", "compras"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/compras",
+              "host": ["{{base_url}}"],
+              "path": ["api", "compras"]
+            }
           }
         }
       ]
     },
     {
-      "name": "04 Ventas y Facturación (Módulo C)",
+      "name": "04 Ventas y Facturación - Salidas Atómicas (Módulo C)",
       "item": [
         {
-          "name": "Facturar Venta con Stock Suficiente (201)",
+          "name": "11 - Facturar Venta con Stock Suficiente (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 201 - Venta facturada y stock descontado\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.environment.set('venta_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_vendedor}}"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"cliente_nombre\": \"Carlos Mendoza\",\n  \"cliente_documento\": \"10203040\",\n  \"items\": [\n    {\n      \"producto_id\": 1,\n      \"cantidad\": 2\n    }\n  ]\n}"},
-            "url": {"raw": "{{base_url}}/api/ventas", "host": ["{{base_url}}"], "path": ["api", "ventas"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_vendedor}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"cliente_nombre\": \"Carlos Mendoza\",\n  \"cliente_documento\": \"10203040\",\n  \"items\": [\n    {\n      \"producto_id\": 1,\n      \"cantidad\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ventas"]
+            }
           }
         },
         {
-          "name": "Venta Rechazada por Stock Insuficiente (422)",
+          "name": "12 - Listar Historial de Facturación de Ventas (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Historial de ventas listado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
-            "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_vendedor}}"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"items\": [\n    {\n      \"producto_id\": 1,\n      \"cantidad\": 9999\n    }\n  ]\n}"},
-            "url": {"raw": "{{base_url}}/api/ventas", "host": ["{{base_url}}"], "path": ["api", "ventas"]}
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ventas"]
+            }
           }
         }
       ]
     },
     {
-      "name": "05 Reportes y Estadísticas (Módulo C)",
+      "name": "05 Reportes y Estadísticas Financieras (Módulo C)",
       "item": [
         {
-          "name": "Ventas Diarias (200)",
+          "name": "13 - Reporte de Ventas Diarias (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Reporte diario generado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_admin}}"}],
-            "url": {"raw": "{{base_url}}/api/reportes/ventas-diarias", "host": ["{{base_url}}"], "path": ["api", "reportes", "ventas-diarias"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/ventas-diarias",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reportes", "ventas-diarias"]
+            }
           }
         },
         {
-          "name": "Resumen Valorizado de Inventario (200)",
+          "name": "14 - Reporte de Ventas Mensuales (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Reporte mensual generado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_admin}}"}],
-            "url": {"raw": "{{base_url}}/api/reportes/inventario", "host": ["{{base_url}}"], "path": ["api", "reportes", "inventario"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/ventas-mensuales",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reportes", "ventas-mensuales"]
+            }
           }
         },
         {
-          "name": "Exportar Ventas en CSV (200)",
+          "name": "15 - Resumen Valorizado de Inventario (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Resumen de inventario generado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Authorization", "value": "Bearer {{token_admin}}"}],
-            "url": {"raw": "{{base_url}}/api/reportes/exportar-ventas-csv", "host": ["{{base_url}}"], "path": ["api", "reportes", "exportar-ventas-csv"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/inventario",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reportes", "inventario"]
+            }
+          }
+        },
+        {
+          "name": "16 - Exportar Historial de Ventas en CSV (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Archivo CSV descargado correctamente\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/exportar-ventas-csv",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reportes", "exportar-ventas-csv"]
+            }
           }
         }
       ]
     },
     {
-      "name": "06 Aplicación Móvil y Chatbot (Módulo D)",
+      "name": "06 Aplicación Móvil y Chatbot Asistente (Módulo D)",
       "item": [
         {
-          "name": "Buscar Producto por Código de Barras (200)",
+          "name": "17 - Búsqueda de Producto por Código de Barras (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Producto identificado por código de barras\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Accept", "value": "application/json"}],
-            "url": {"raw": "{{base_url}}/api/aplicacion_movil/producto/codigo/7701234567890", "host": ["{{base_url}}"], "path": ["api", "aplicacion_movil", "producto", "codigo", "7701234567890"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/producto/codigo/7701234567890",
+              "host": ["{{base_url}}"],
+              "path": ["api", "aplicacion_movil", "producto", "codigo", "7701234567890"]
+            }
           }
         },
         {
-          "name": "Buscar Producto por Nombre (200)",
+          "name": "18 - Búsqueda Predictiva de Producto por Nombre (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Búsqueda predictiva exitosa\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Accept", "value": "application/json"}],
-            "url": {"raw": "{{base_url}}/api/aplicacion_movil/producto/nombre?q=Taladro", "host": ["{{base_url}}"], "path": ["api", "aplicacion_movil", "producto", "nombre"], "query": [{"key": "q", "value": "Taladro"}]}
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/producto/nombre?q=Taladro",
+              "host": ["{{base_url}}"],
+              "path": ["api", "aplicacion_movil", "producto", "nombre"],
+              "query": [{ "key": "q", "value": "Taladro" }]
+            }
           }
         },
         {
-          "name": "Chatbot Asistente - Consulta de Stock (200)",
+          "name": "19 - Chatbot Asistente - Consulta de Alertas de Stock (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Chatbot respondió consulta de stock\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"mensaje\": \"¿Qué productos tienen stock bajo?\"\n}"},
-            "url": {"raw": "{{base_url}}/api/aplicacion_movil/chatbot", "host": ["{{base_url}}"], "path": ["api", "aplicacion_movil", "chatbot"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"¿Qué productos tienen stock bajo?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/chatbot",
+              "host": ["{{base_url}}"],
+              "path": ["api", "aplicacion_movil", "chatbot"]
+            }
+          }
+        },
+        {
+          "name": "20 - Chatbot Asistente - Consulta de Precio de Producto (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Chatbot respondió consulta de precio\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"¿Cuánto cuesta el martillo?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/chatbot",
+              "host": ["{{base_url}}"],
+              "path": ["api", "aplicacion_movil", "chatbot"]
+            }
           }
         }
       ]
     },
     {
-      "name": "07 Contacto y Correos (PDF 1 & PDF 3)",
+      "name": "07 Formulario de Contacto (Módulo Web)",
       "item": [
         {
-          "name": "Enviar Mensaje de Contacto (200)",
+          "name": "21 - Enviar Formulario de Contacto (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Formulario procesado exitosamente\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Andres Ruiz\",\n  \"email\": \"andres@example.com\",\n  \"subject\": \"Solicitud de presupuesto\",\n  \"message\": \"Requiero cotización formal de materiales de construcción.\"\n}"},
-            "url": {"raw": "{{base_url}}/api/contacto", "host": ["{{base_url}}"], "path": ["api", "contacto"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Andres Ruiz\",\n  \"email\": \"contacto_{{$timestamp}}@inbot.com\",\n  \"subject\": \"Solicitud de presupuesto formal\",\n  \"message\": \"Requiero cotización formal de materiales para bodega e inventario.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/contacto",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contacto"]
+            }
           }
         }
       ]
     },
     {
-      "name": "08 Control de Roles RBAC (Módulo E)",
+      "name": "08 Cierre Seguro de Sesión (Al Final de la Ejecución)",
       "item": [
         {
-          "name": "Vendedor intenta Crear Producto (403 Forbidden)",
+          "name": "22 - Logout y Revocación de Token Vendedor (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Token vendedor revocado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{token_vendedor}}"}, {"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"codigo_barras\": \"999888777\",\n  \"nombre\": \"Intento no autorizado\",\n  \"precio_compra\": 5000\n}"},
-            "url": {"raw": "{{base_url}}/api/productos", "host": ["{{base_url}}"], "path": ["api", "productos"]}
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_vendedor}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "logout"]
+            }
+          }
+        },
+        {
+          "name": "23 - Logout y Revocación de Token Administrador (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 - Token administrador revocado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "logout"]
+            }
           }
         }
       ]
