@@ -1,0 +1,4624 @@
+{
+  "info": {
+    "name": "INBOT SYSTEM - Auditoría de Seguridad API (Laravel + Sanctum)",
+    "description": "Colección de auditoría para la actividad 'Informe de auditoría y pruebas de seguridad Laravel + Postman'. Cubre tablas 10, 11, 12 y 13 y la matriz de pruebas. Un test que FALLA no es un error de la colección: es un posible hallazgo para la matriz H01..Hn. Seleccionar el entorno 'INBOT Auditoria (local)', completar las contraseñas (secret) y ejecutar con Collection Runner en orden. La carpeta 08 va al final.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 Autenticación y API de sesión (Tablas 10 y 13)",
+      "item": [
+        {
+          "name": "T01 - Registro válido (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Operador Prueba\",\n  \"email\": \"{{reg_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirmation\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"reg_email\", \"operador_\" + Date.now() + \"@inbot.com\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                  "const p = pm.environment.get(\"test_password\");",
+                  "if (p) { pm.test(\"No devuelve la contraseña en la respuesta\", function () { pm.expect(pm.response.text()).to.not.include(p); }); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T02a - Registro inválido: email mal formado (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Prueba\",\n  \"email\": \"correo-invalido\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirmation\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T02b - Registro inválido: contraseña corta (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Prueba\",\n  \"email\": \"corta_{{$timestamp}}@inbot.com\",\n  \"password\": \"123\",\n  \"password_confirmation\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T02c - Registro inválido: sin nombre (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sinnombre_{{$timestamp}}@inbot.com\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirmation\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T02d - Registro inválido: confirmación distinta (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Prueba\",\n  \"email\": \"noconf_{{$timestamp}}@inbot.com\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirmation\": \"OtraClave999!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T03 - Registro con correo duplicado (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Operador Prueba\",\n  \"email\": \"{{reg_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirmation\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Debe ejecutarse después de T01 (usa el mismo correo)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T04 - Login Administrador válido (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });",
+                  "let j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "const t = j.token || j.access_token || (j.data && (j.data.token || j.data.access_token));",
+                  "pm.test(\"Devuelve token de acceso\", function () { pm.expect(t).to.be.a(\"string\").and.not.empty; });",
+                  "if (t) { pm.collectionVariables.set(\"token_admin\", t); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T05 - Login Vendedor válido (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{vendedor_email}}\",\n  \"password\": \"{{vendedor_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });",
+                  "let j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "const t = j.token || j.access_token || (j.data && (j.data.token || j.data.access_token));",
+                  "pm.test(\"Devuelve token de acceso\", function () { pm.expect(t).to.be.a(\"string\").and.not.empty; });",
+                  "if (t) { pm.collectionVariables.set(\"token_vendedor\", t); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T05B - Login Usuario normal (operador creado en T01) (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{reg_email}}\",\n  \"password\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });",
+                  "let j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "const t = j.token || j.access_token || (j.data && (j.data.token || j.data.access_token));",
+                  "pm.test(\"Devuelve token de acceso\", function () { pm.expect(t).to.be.a(\"string\").and.not.empty; });",
+                  "if (t) { pm.collectionVariables.set(\"token_operador\", t); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T06 - Login contraseña incorrecta (401/422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"ClaveErronea123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 401 o 422\", function () { pm.expect(pm.response.code).to.be.oneOf([401, 422]); });",
+                  "pm.test(\"No entrega token de acceso\", function () {",
+                  "  pm.expect(pm.response.text()).to.not.match(/\"(access_)?token\"\\s*:\\s*\"/);",
+                  "});",
+                  "let j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "if (j.message) { pm.collectionVariables.set(\"msg_t06\", j.message); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T07 - Login usuario inexistente (401/422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noexiste@inbot.com\",\n  \"password\": \"ClaveErronea123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 401 o 422\", function () { pm.expect(pm.response.code).to.be.oneOf([401, 422]); });",
+                  "pm.test(\"No entrega token de acceso\", function () {",
+                  "  pm.expect(pm.response.text()).to.not.match(/\"(access_)?token\"\\s*:\\s*\"/);",
+                  "});",
+                  "let j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "const m = pm.collectionVariables.get(\"msg_t06\");",
+                  "if (m && j.message) {",
+                  "  pm.test(\"Mensaje genérico: no permite enumerar usuarios (igual a T06)\", function () { pm.expect(j.message).to.eql(m); });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T08 - Login campos vacíos (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T09 - Profile sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401 esperado\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T10 - Profile con token inválido (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_invalido}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401 esperado\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T11 - Profile con token válido (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Perfil corresponde al usuario autenticado\", function () { pm.expect(pm.response.text()).to.include(pm.environment.get(\"admin_email\")); });",
+                  "pm.test(\"No expone el campo password\", function () { pm.expect(pm.response.text()).to.not.include('\"password\"'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T12A - Login auxiliar para prueba de logout (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });",
+                  "let j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "const t = j.token || j.access_token || (j.data && (j.data.token || j.data.access_token));",
+                  "pm.test(\"Devuelve token de acceso\", function () { pm.expect(t).to.be.a(\"string\").and.not.empty; });",
+                  "if (t) { pm.collectionVariables.set(\"token_logout\", t); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T12 - Logout con token válido (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_logout}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "logout"
+              ]
+            },
+            "description": "Usa un token propio (token_logout) para no invalidar token_admin del resto de pruebas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T12B - Profile con token revocado tras logout (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_logout}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "description": "Demuestra que el logout realmente revoca el token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401 esperado\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Autorización y RBAC (Tabla 10 y Módulo E)",
+      "item": [
+        {
+          "name": "T13 - Listar productos sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401 esperado\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T13B - Ventas sin token (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"items\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401 esperado\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T13C - Reportes sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/inventario",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "inventario"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401 esperado\", function () { pm.response.to.have.status(401); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T14 - Usuario normal crea producto (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_operador}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{cb}}\",\n  \"nombre\": \"Producto Auditoria {{cb}}\",\n  \"categoria_id\": {{categoria_id}},\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Usuario creado por registro público: no debe poder administrar. Si responde 201 es hallazgo crítico (escalada de privilegios)."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403 esperado\", function () { pm.response.to.have.status(403); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T15 - Vendedor crea producto (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{cb}}\",\n  \"nombre\": \"Producto Auditoria {{cb}}\",\n  \"categoria_id\": {{categoria_id}},\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403 esperado\", function () { pm.response.to.have.status(403); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T16 - Vendedor registra compra a proveedor (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/compras",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "compras"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedor_id\": {{proveedor_id}},\n  \"numero_factura\": \"AUD-NEG-001\",\n  \"items\": [\n    {\n      \"producto_id\": {{producto_id_existente}},\n      \"cantidad\": 1,\n      \"precio_unitario\": 1000\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Asume que solo Admin/Bodeguero registran compras. Si tu diseño permite al vendedor, ajusta el código esperado y documéntalo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403 esperado\", function () { pm.response.to.have.status(403); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T17 - Vendedor consulta reporte de inventario (403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/inventario",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "inventario"
+              ]
+            },
+            "description": "Asume reportes solo para Admin. Ajusta si tu matriz de roles es distinta."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403 esperado\", function () { pm.response.to.have.status(403); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T18 - Usuario normal consulta reportes (403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_operador}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/ventas-diarias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "ventas-diarias"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403 esperado\", function () { pm.response.to.have.status(403); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T19 - Mass assignment: registro enviando role=admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Prueba MA\",\n  \"email\": \"{{ma_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirmation\": \"{{test_password}}\",\n  \"role\": \"admin\",\n  \"rol\": \"admin\",\n  \"is_admin\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"ma_email\", \"ma_\" + Date.now() + \"@inbot.com\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201 o 422\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 422]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T19B - Login del usuario creado con role=admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{ma_email}}\",\n  \"password\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "const t = j.token || j.access_token || (j.data && (j.data.token || j.data.access_token));",
+                  "pm.collectionVariables.set(\"token_ma\", t || \"sin_token\");",
+                  "pm.test(\"Respuesta de login coherente\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 401, 422]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T19C - Ese usuario NO debe poder crear productos (401/403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_ma}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{cb}}\",\n  \"nombre\": \"Producto Auditoria {{cb}}\",\n  \"categoria_id\": {{categoria_id}},\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Si responde 201, el campo role es asignable masivamente: hallazgo CRÍTICO."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 401 o 403\", function () { pm.expect(pm.response.code).to.be.oneOf([401, 403]); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T20 - Admin crea producto (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{cb}}\",\n  \"nombre\": \"Producto Auditoria {{cb}}\",\n  \"categoria_id\": {{categoria_id}},\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                  "let j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "const id = j.id || (j.data && j.data.id) || (j.producto && j.producto.id);",
+                  "if (id) { pm.collectionVariables.set(\"producto_id_nuevo\", id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "T21 - Admin lista productos paginados (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos?per_page=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Validaciones y pruebas negativas (Tabla 11)",
+      "item": [
+        {
+          "name": "V01 - Producto con campos vacíos (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V02 - Producto con precio_compra negativo (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{cb}}\",\n  \"nombre\": \"Producto Auditoria {{cb}}\",\n  \"categoria_id\": {{categoria_id}},\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": -500,\n  \"porcentaje_ganancia\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V03 - Producto con código de barras duplicado (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{codigo_existente}}\",\n  \"nombre\": \"Producto Auditoria {{cb}}\",\n  \"categoria_id\": {{categoria_id}},\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Requiere que codigo_existente (entorno) sea un código ya registrado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V04 - Producto con nombre de 300 caracteres (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{cb}}\",\n  \"nombre\": \"{{nombre_largo}}\",\n  \"categoria_id\": {{categoria_id}},\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"nombre_largo\", \"A\".repeat(300));",
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V05 - Producto con categoria_id inexistente (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{cb}}\",\n  \"nombre\": \"Producto Auditoria {{cb}}\",\n  \"categoria_id\": 99999,\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V06 - Producto con tipos inválidos (texto en campos numéricos) (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{cb}}\",\n  \"nombre\": \"Producto Auditoria {{cb}}\",\n  \"categoria_id\": {{categoria_id}},\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": \"xx\",\n  \"stock_minimo\": 5,\n  \"precio_compra\": \"abc\",\n  \"porcentaje_ganancia\": 35\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V07 - Producto con porcentaje_ganancia negativo (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo_barras\": \"{{cb}}\",\n  \"nombre\": \"Producto Auditoria {{cb}}\",\n  \"categoria_id\": {{categoria_id}},\n  \"proveedor_id\": {{proveedor_id}},\n  \"stock_actual\": 25,\n  \"stock_minimo\": 5,\n  \"precio_compra\": 12000,\n  \"porcentaje_ganancia\": -50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V08 - Venta con cantidad 0 (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"items\": [{\"producto_id\": {{producto_id_existente}}, \"cantidad\": 0}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V09 - Venta con cantidad negativa (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"items\": [{\"producto_id\": {{producto_id_existente}}, \"cantidad\": -5}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V10 - Venta con cantidad en texto (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"items\": [{\"producto_id\": {{producto_id_existente}}, \"cantidad\": \"dos\"}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V11 - Venta con producto inexistente (404/422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"items\": [{\"producto_id\": 999999, \"cantidad\": 1}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 404 o 422\", function () { pm.expect(pm.response.code).to.be.oneOf([404, 422]); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V12 - Venta sin items (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"items\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V13 - Venta con método de pago inválido (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"bitcoin\",\n  \"items\": [{\"producto_id\": {{producto_id_existente}}, \"cantidad\": 1}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V14 - Venta con stock insuficiente (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"items\": [{\"producto_id\": {{producto_id_existente}}, \"cantidad\": 9999}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V15 - Compra sin items (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/compras",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "compras"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedor_id\": {{proveedor_id}},\n  \"numero_factura\": \"AUD-V15\",\n  \"items\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V16 - Compra con cantidad negativa (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/compras",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "compras"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedor_id\": {{proveedor_id}},\n  \"numero_factura\": \"AUD-V16\",\n  \"items\": [{\"producto_id\": {{producto_id_existente}}, \"cantidad\": -3, \"precio_unitario\": 1000}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V17 - Compra con precio_unitario negativo (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/compras",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "compras"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedor_id\": {{proveedor_id}},\n  \"numero_factura\": \"AUD-V17\",\n  \"items\": [{\"producto_id\": {{producto_id_existente}}, \"cantidad\": 1, \"precio_unitario\": -1000}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V18 - Contacto con email inválido (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/contacto",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "contacto"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Prueba\",\n  \"email\": \"no-es-correo\",\n  \"subject\": \"Asunto\",\n  \"message\": \"Mensaje de prueba\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V19 - Contacto con campos vacíos (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/contacto",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "contacto"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"email\": \"\",\n  \"subject\": \"\",\n  \"message\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V20 - Contacto con payload XSS (no debe dar 500)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/contacto",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "contacto"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"<script>alert(1)</script>\",\n  \"email\": \"xss@example.com\",\n  \"subject\": \"XSS\",\n  \"message\": \"<img src=x onerror=alert(1)>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Verifica además en el panel/correo que el contenido se muestre escapado (Blade {{ }})."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Sin error de servidor (<500)\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V21 - SQL injection en búsqueda por nombre",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/producto/nombre?q=' OR '1'='1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "aplicacion_movil",
+                "producto",
+                "nombre"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "' OR '1'='1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Sin error de servidor (<500)\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "V22 - SQL injection en búsqueda por código de barras",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/producto/codigo/%27%20OR%201%3D1--",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "aplicacion_movil",
+                "producto",
+                "codigo",
+                "%27%20OR%201%3D1--"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Sin error de servidor (<500)\", function () { pm.expect(pm.response.code).to.be.below(500); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Auditoría de imágenes (Sección 12)",
+      "item": [
+        {
+          "name": "IMG01 - Subir JPG válido (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "codigo_barras",
+                  "value": "{{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Producto Imagen {{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "proveedor_id",
+                  "value": "{{proveedor_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_actual",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_minimo",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "precio_compra",
+                  "value": "9000",
+                  "type": "text"
+                },
+                {
+                  "key": "porcentaje_ganancia",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "imagenes_prueba/jpg_valido.jpg"
+                }
+              ]
+            },
+            "description": "Ajusta la ruta y el nombre del campo (imagen) si tu API usa otros. Coloca la carpeta imagenes_prueba/ en el directorio de trabajo de Postman o reselecciona el archivo."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+                  "",
+                  "let j = {}; try { j = pm.response.json(); } catch (e) {}",
+                  "const id = j.id || (j.data && j.data.id) || (j.producto && j.producto.id);",
+                  "if (id) { pm.collectionVariables.set(\"producto_id_img\", id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IMG02 - Subir JPEG válido (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "codigo_barras",
+                  "value": "{{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Producto Imagen {{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "proveedor_id",
+                  "value": "{{proveedor_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_actual",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_minimo",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "precio_compra",
+                  "value": "9000",
+                  "type": "text"
+                },
+                {
+                  "key": "porcentaje_ganancia",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "imagenes_prueba/jpeg_valido.jpeg"
+                }
+              ]
+            },
+            "description": "Ajusta la ruta y el nombre del campo (imagen) si tu API usa otros. Coloca la carpeta imagenes_prueba/ en el directorio de trabajo de Postman o reselecciona el archivo."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IMG03 - Subir PNG válido (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "codigo_barras",
+                  "value": "{{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Producto Imagen {{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "proveedor_id",
+                  "value": "{{proveedor_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_actual",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_minimo",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "precio_compra",
+                  "value": "9000",
+                  "type": "text"
+                },
+                {
+                  "key": "porcentaje_ganancia",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "imagenes_prueba/png_valido.png"
+                }
+              ]
+            },
+            "description": "Ajusta la ruta y el nombre del campo (imagen) si tu API usa otros. Coloca la carpeta imagenes_prueba/ en el directorio de trabajo de Postman o reselecciona el archivo."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IMG04 - Subir WEBP válido (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "codigo_barras",
+                  "value": "{{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Producto Imagen {{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "proveedor_id",
+                  "value": "{{proveedor_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_actual",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_minimo",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "precio_compra",
+                  "value": "9000",
+                  "type": "text"
+                },
+                {
+                  "key": "porcentaje_ganancia",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "imagenes_prueba/webp_valido.webp"
+                }
+              ]
+            },
+            "description": "Ajusta la ruta y el nombre del campo (imagen) si tu API usa otros. Coloca la carpeta imagenes_prueba/ en el directorio de trabajo de Postman o reselecciona el archivo."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IMG05 - Subir GIF (permitido 201 / no permitido 422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "codigo_barras",
+                  "value": "{{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Producto Imagen {{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "proveedor_id",
+                  "value": "{{proveedor_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_actual",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_minimo",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "precio_compra",
+                  "value": "9000",
+                  "type": "text"
+                },
+                {
+                  "key": "porcentaje_ganancia",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "imagenes_prueba/gif_valido.gif"
+                }
+              ]
+            },
+            "description": "Documenta en el informe si tu política permite GIF o no."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201 o 422\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 422]); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IMG06 - Subir archivo .txt no permitido (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "codigo_barras",
+                  "value": "{{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Producto Imagen {{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "proveedor_id",
+                  "value": "{{proveedor_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_actual",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_minimo",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "precio_compra",
+                  "value": "9000",
+                  "type": "text"
+                },
+                {
+                  "key": "porcentaje_ganancia",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "imagenes_prueba/documento_no_permitido.txt"
+                }
+              ]
+            },
+            "description": "Ajusta la ruta y el nombre del campo (imagen) si tu API usa otros. Coloca la carpeta imagenes_prueba/ en el directorio de trabajo de Postman o reselecciona el archivo."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IMG07 - Subir script PHP disfrazado como .php.jpg (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "codigo_barras",
+                  "value": "{{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Producto Imagen {{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "proveedor_id",
+                  "value": "{{proveedor_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_actual",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_minimo",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "precio_compra",
+                  "value": "9000",
+                  "type": "text"
+                },
+                {
+                  "key": "porcentaje_ganancia",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "imagenes_prueba/shell_disfrazado.php.jpg"
+                }
+              ]
+            },
+            "description": "Ajusta la ruta y el nombre del campo (imagen) si tu API usa otros. Coloca la carpeta imagenes_prueba/ en el directorio de trabajo de Postman o reselecciona el archivo."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 422 esperado\", function () { pm.response.to.have.status(422); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IMG08 - Subir imagen que excede el tamaño máximo (422/413)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "codigo_barras",
+                  "value": "{{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Producto Imagen {{cb}}",
+                  "type": "text"
+                },
+                {
+                  "key": "categoria_id",
+                  "value": "{{categoria_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "proveedor_id",
+                  "value": "{{proveedor_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_actual",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "stock_minimo",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "precio_compra",
+                  "value": "9000",
+                  "type": "text"
+                },
+                {
+                  "key": "porcentaje_ganancia",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "imagenes_prueba/imagen_excede_tamano.jpg"
+                }
+              ]
+            },
+            "description": "Ajusta la ruta y el nombre del campo (imagen) si tu API usa otros. Coloca la carpeta imagenes_prueba/ en el directorio de trabajo de Postman o reselecciona el archivo."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"cb\", \"77\" + Date.now() + Math.floor(Math.random()*90+10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 413 o 422\", function () { pm.expect(pm.response.code).to.be.oneOf([413, 422]); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IMG09 - Reemplazar imagen del producto IMG01 (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos/{{producto_id_img}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "{{producto_id_img}}"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PUT",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Producto Imagen Reemplazada",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": "imagenes_prueba/png_valido.png"
+                }
+              ]
+            },
+            "description": "Ajusta la ruta y el nombre del campo (imagen) si tu API usa otros. Coloca la carpeta imagenes_prueba/ en el directorio de trabajo de Postman o reselecciona el archivo. Verifica en storage que la imagen anterior se eliminó."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "IMG10 - Eliminar producto con imagen (200/204)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/productos/{{producto_id_img}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "{{producto_id_img}}"
+              ]
+            },
+            "description": "Verifica en storage/app/public que el archivo también fue eliminado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 204\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 204]); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Funcionalidad y reportes con token (pruebas positivas)",
+      "item": [
+        {
+          "name": "F01 - Stock bajo (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/stock_bajo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "stock_bajo"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "F02 - Registrar compra, incrementa stock (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/compras",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "compras"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proveedor_id\": {{proveedor_id}},\n  \"numero_factura\": \"AUD-{{$timestamp}}\",\n  \"items\": [{\"producto_id\": {{producto_id_existente}}, \"cantidad\": 10, \"precio_unitario\": 120000}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "F03 - Historial de compras (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/compras",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "compras"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "F04 - Venta válida con stock suficiente (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_vendedor}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo_pago\": \"efectivo\",\n  \"cliente_nombre\": \"Cliente Auditoria\",\n  \"cliente_documento\": \"10203040\",\n  \"items\": [{\"producto_id\": {{producto_id_existente}}, \"cantidad\": 2}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "F05 - Ventas diarias (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/ventas-diarias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "ventas-diarias"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "F06 - Inventario valorizado (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/inventario",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "inventario"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "F07 - Exportar ventas CSV (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reportes/exportar-ventas-csv",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "exportar-ventas-csv"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200 esperado\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type es CSV/texto\", function () { pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.match(/csv|text/i); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 App móvil, chatbot y contacto (endpoints públicos)",
+      "item": [
+        {
+          "name": "M01 - Buscar por código de barras (público)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/producto/codigo/{{codigo_existente}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "aplicacion_movil",
+                "producto",
+                "codigo",
+                "{{codigo_existente}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Endpoint PÚBLICO (sin token) respondió 200: documentar si es intencional\", function () { pm.response.to.have.status(200); });",
+                  "console.log(\"HALLAZGO POTENCIAL: endpoint accesible sin autenticación -> \" + pm.request.url.toString());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "M02 - Buscar por nombre (público)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/producto/nombre?q=Taladro",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "aplicacion_movil",
+                "producto",
+                "nombre"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Taladro"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Endpoint PÚBLICO (sin token) respondió 200: documentar si es intencional\", function () { pm.response.to.have.status(200); });",
+                  "console.log(\"HALLAZGO POTENCIAL: endpoint accesible sin autenticación -> \" + pm.request.url.toString());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "M03 - Chatbot consulta de stock (público)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/chatbot",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "aplicacion_movil",
+                "chatbot"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"¿Qué productos tienen stock bajo?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Endpoint PÚBLICO (sin token) respondió 200: documentar si es intencional\", function () { pm.response.to.have.status(200); });",
+                  "console.log(\"HALLAZGO POTENCIAL: endpoint accesible sin autenticación -> \" + pm.request.url.toString());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "M04 - Enviar mensaje de contacto válido (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/contacto",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "contacto"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Andres Ruiz\",\n  \"email\": \"andres@example.com\",\n  \"subject\": \"Solicitud de presupuesto\",\n  \"message\": \"Requiero cotización formal de materiales de construcción.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 200 o 201\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 Configuración, exposición de información y cabeceras (Sección 9)",
+      "item": [
+        {
+          "name": "C01 - Ruta inexistente: 404 sin traza",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ruta-que-no-existe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "ruta-que-no-existe"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404 esperado\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C02 - Método no permitido (GET /api/login): 405 sin traza",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 405 esperado\", function () { pm.response.to.have.status(405); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C03 - JSON malformado en login: 4xx sin traza",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"admin@inbot.com\", \"password\": ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP esperado: 400 o 422\", function () { pm.expect(pm.response.code).to.be.oneOf([400, 422]); });",
+                  "pm.test(\"No expone trazas internas ni errores SQL (APP_DEBUG)\", function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include(\"vendor/laravel\");",
+                  "  pm.expect(t).to.not.include(\"SQLSTATE\");",
+                  "  pm.expect(t).to.not.include(\"Stack trace\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C04 - Acceso a /.env (no debe ser 200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/.env",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                ".env"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"/.env no es accesible\", function () { pm.expect(pm.response.code).to.be.oneOf([403, 404]); });",
+                  "pm.test(\"No contiene APP_KEY\", function () { pm.expect(pm.response.text()).to.not.include(\"APP_KEY\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C05 - Acceso a storage/logs/laravel.log (no debe ser 200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/storage/logs/laravel.log",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "storage",
+                "logs",
+                "laravel.log"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"laravel.log no es accesible\", function () { pm.expect(pm.response.code).to.be.oneOf([403, 404]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C06 - Cabeceras de seguridad HTTP",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/producto/nombre?q=Taladro",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "aplicacion_movil",
+                "producto",
+                "nombre"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Taladro"
+                }
+              ]
+            },
+            "description": "Si alguna prueba falla es un hallazgo de endurecimiento (riesgo bajo/medio); documenta la recomendación."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"X-Content-Type-Options presente\", function () { pm.expect(pm.response.headers.has(\"X-Content-Type-Options\")).to.be.true; });",
+                  "pm.test(\"X-Frame-Options o CSP presente\", function () { pm.expect(pm.response.headers.has(\"X-Frame-Options\") || pm.response.headers.has(\"Content-Security-Policy\")).to.be.true; });",
+                  "pm.test(\"No revela X-Powered-By\", function () { pm.expect(pm.response.headers.has(\"X-Powered-By\")).to.be.false; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "C07 - CORS: origen no confiable no debe recibir comodín",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "https://sitio-malicioso.example"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/aplicacion_movil/producto/nombre?q=Taladro",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "aplicacion_movil",
+                "producto",
+                "nombre"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Taladro"
+                }
+              ]
+            },
+            "description": "Si Access-Control-Allow-Origin devuelve *, evalúa restringir orígenes en config/cors.php."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"CORS no permite cualquier origen (*)\", function () {",
+                  "  const v = pm.response.headers.get(\"Access-Control-Allow-Origin\");",
+                  "  pm.expect(v).to.not.equal(\"*\");",
+                  "  pm.expect(v).to.not.equal(\"https://sitio-malicioso.example\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 Rate limiting (EJECUTAR AL FINAL)",
+      "item": [
+        {
+          "name": "R01 - Fuerza bruta en login: debe aparecer 429 (throttle)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"throttle@inbot.com\",\n  \"password\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Envía 12 intentos fallidos con un correo inexistente. Si ninguna respuesta es 429, falta throttle en login (hallazgo). Puede bloquear tu IP ~1 min: por eso va al final."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const url = pm.variables.replaceIn(\"{{base_url}}/api/login\");",
+                  "let n = 0, hits = 0; const total = 12;",
+                  "function next() {",
+                  "  if (n >= total) { pm.collectionVariables.set(\"throttle_429s\", hits); return; }",
+                  "  n++;",
+                  "  pm.sendRequest({",
+                  "    url: url, method: \"POST\",",
+                  "    header: { \"Accept\": \"application/json\", \"Content-Type\": \"application/json\" },",
+                  "    body: { mode: \"raw\", raw: JSON.stringify({ email: \"throttle@inbot.com\", password: \"x\" }) }",
+                  "  }, function (err, res) { if (res && res.code === 429) { hits++; } next(); });",
+                  "}",
+                  "next();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Rate limiting activo: se recibió 429 tras intentos repetidos\", function () {",
+                  "  const hits = Number(pm.collectionVariables.get(\"throttle_429s\")) || 0;",
+                  "  pm.expect(pm.response.code === 429 || hits > 0).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "token_admin",
+      "value": ""
+    },
+    {
+      "key": "token_vendedor",
+      "value": ""
+    },
+    {
+      "key": "token_operador",
+      "value": ""
+    },
+    {
+      "key": "token_logout",
+      "value": ""
+    },
+    {
+      "key": "token_ma",
+      "value": ""
+    },
+    {
+      "key": "token_invalido",
+      "value": "999|TokenFalsoAuditoria1234567890"
+    },
+    {
+      "key": "reg_email",
+      "value": ""
+    },
+    {
+      "key": "ma_email",
+      "value": ""
+    },
+    {
+      "key": "cb",
+      "value": ""
+    },
+    {
+      "key": "nombre_largo",
+      "value": ""
+    },
+    {
+      "key": "producto_id_nuevo",
+      "value": ""
+    },
+    {
+      "key": "producto_id_img",
+      "value": ""
+    },
+    {
+      "key": "msg_t06",
+      "value": ""
+    },
+    {
+      "key": "throttle_429s",
+      "value": ""
+    }
+  ]
+}
