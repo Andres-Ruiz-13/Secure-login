@@ -45,12 +45,14 @@ class CompraController extends Controller
 
     /**
      * Registra una compra a proveedor dentro de una transacción atómica e incrementa el stock.
+     * Permite productos existentes o productos nuevos con cálculo automático de precio de venta.
      */
     public function store(StorePurchaseRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $globalProfit = (float) ($validated['porcentaje_ganancia'] ?? config('inbot.default_profit_percentage', 30.0));
 
-        $compra = DB::transaction(function () use ($validated, $request) {
+        $compra = DB::transaction(function () use ($validated, $request, $globalProfit) {
             $totalCompra = 0;
 
             $compra = Compra::create([
@@ -63,12 +65,47 @@ class CompraController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                // Bloquear fila del producto para evitar condiciones de carrera
-                $producto = Producto::where('id', $item['producto_id'])->lockForUpdate()->firstOrFail();
-
                 $cantidad = (int) $item['cantidad'];
                 $precioUnitario = (float) $item['precio_unitario'];
-                $subtotal = $cantidad * $precioUnitario;
+                $subtotal = round($cantidad * $precioUnitario, 2);
+
+                // Caso 1: Producto Nuevo
+                if (! empty($item['nombre']) || (isset($item['tipo']) && $item['tipo'] === 'nuevo')) {
+                    $itemProfit = isset($item['porcentaje_ganancia']) ? (float) $item['porcentaje_ganancia'] : $globalProfit;
+                    
+                    $codigoBarras = ! empty($item['codigo_barras']) 
+                        ? $item['codigo_barras'] 
+                        : ('GEN-' . strtoupper(\Illuminate\Support\Str::random(10)));
+
+                    // Garantizar código único
+                    while (Producto::where('codigo_barras', $codigoBarras)->exists()) {
+                        $codigoBarras = 'GEN-' . strtoupper(\Illuminate\Support\Str::random(10));
+                    }
+
+                    $producto = Producto::create([
+                        'codigo_barras'       => $codigoBarras,
+                        'nombre'              => $item['nombre'],
+                        'descripcion'         => $item['descripcion'] ?? null,
+                        'categoria_id'        => $item['categoria_id'] ?? null,
+                        'proveedor_id'        => $validated['proveedor_id'],
+                        'precio_compra'       => $precioUnitario,
+                        'porcentaje_ganancia' => $itemProfit,
+                        'stock_actual'        => $cantidad,
+                        'stock_minimo'        => 5,
+                        'is_active'           => true,
+                    ]);
+                } else {
+                    // Caso 2: Producto Existente
+                    $producto = Producto::where('id', $item['producto_id'])->lockForUpdate()->firstOrFail();
+
+                    // Incrementar stock atómicamente
+                    $producto->increment('stock_actual', $cantidad);
+
+                    // Actualizar último precio de compra y recalcular precio de venta
+                    if ($precioUnitario > 0) {
+                        $producto->update(['precio_compra' => $precioUnitario]);
+                    }
+                }
 
                 DetalleCompra::create([
                     'compra_id'       => $compra->id,
@@ -78,14 +115,6 @@ class CompraController extends Controller
                     'subtotal'        => $subtotal,
                 ]);
 
-                // Incrementar stock atómicamente
-                $producto->increment('stock_actual', $cantidad);
-
-                // Opcional: actualizar último precio de compra si aplica
-                if ($precioUnitario > 0) {
-                    $producto->update(['precio_compra' => $precioUnitario]);
-                }
-
                 $totalCompra += $subtotal;
             }
 
@@ -93,6 +122,14 @@ class CompraController extends Controller
 
             return $compra;
         });
+
+        \App\Services\DebugLogService::log('COMPRA_REGISTRADA', [
+            'compra_id'      => $compra->id,
+            'numero_factura' => $compra->numero_factura,
+            'proveedor_id'   => $compra->proveedor_id,
+            'total'          => $compra->total,
+            'items_count'    => count($validated['items']),
+        ]);
 
         AuditService::log('compra_registrada', Compra::class, $compra->id, [
             'numero_factura' => $compra->numero_factura,

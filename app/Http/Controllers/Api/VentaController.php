@@ -19,20 +19,39 @@ class VentaController extends Controller
 {
     /**
      * Listado paginado de ventas con detalles y usuario.
+     * Soporta filtro por hoy o fecha específica.
      */
     public function index(Request $request): JsonResponse
     {
-        $ventas = Venta::with(['usuario', 'detalles.producto'])
-            ->latest('fecha')
-            ->paginate(min((int) ($request->get('per_page', 15)), 100));
+        $query = Venta::with(['usuario', 'detalles.producto']);
+
+        if ($request->boolean('hoy') || $request->get('filtro') === 'hoy') {
+            $query->whereDate('fecha', date('Y-m-d'));
+        } elseif ($request->filled('fecha')) {
+            $query->whereDate('fecha', $request->fecha);
+        }
+
+        $ventas = $query->latest('fecha')
+            ->paginate(min((int) ($request->get('per_page', 10)), 100));
 
         return response()->json([
             'data' => VentaResource::collection($ventas),
             'meta' => [
                 'current_page' => $ventas->currentPage(),
+                'last_page'    => $ventas->lastPage(),
+                'per_page'     => $ventas->perPage(),
                 'total'        => $ventas->total(),
             ],
         ]);
+    }
+
+    /**
+     * Consulta específica de las ventas del día de hoy.
+     */
+    public function ventasHoy(Request $request): JsonResponse
+    {
+        $request->merge(['hoy' => true]);
+        return $this->index($request);
     }
 
     /**
@@ -121,6 +140,13 @@ class VentaController extends Controller
 
             return $venta;
         });
+
+        \App\Services\DebugLogService::log('VENTA_REGISTRADA', [
+            'venta_id'       => $venta->id,
+            'numero_factura' => $venta->numero_factura,
+            'total'          => $venta->total,
+            'metodo_pago'    => $venta->metodo_pago,
+        ]);
 
         AuditService::log('venta_registrada', Venta::class, $venta->id, [
             'numero_factura' => $venta->numero_factura,

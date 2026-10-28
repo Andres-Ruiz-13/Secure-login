@@ -138,9 +138,16 @@ class ProductoController extends Controller
             $data['precio_venta'] = PricingService::calculateSalePrice($purchase, $profit);
         }
 
-        if ($request->hasFile('imagen')) {
+        if ($request->boolean('eliminar_imagen')) {
+            if ($producto->imagen && Storage::disk('public')->exists($producto->imagen) && str_starts_with($producto->imagen, 'productos/')) {
+                Storage::disk('public')->delete($producto->imagen);
+            }
+            \App\Models\Media::where('producto_id', $producto->id)->update(['producto_id' => null]);
+            $data['imagen'] = null;
+            $data['image_hash'] = null;
+        } elseif ($request->hasFile('imagen')) {
             // Eliminar imagen anterior de Storage si existía
-            if ($producto->imagen && Storage::disk('public')->exists($producto->imagen)) {
+            if ($producto->imagen && Storage::disk('public')->exists($producto->imagen) && str_starts_with($producto->imagen, 'productos/')) {
                 Storage::disk('public')->delete($producto->imagen);
             }
 
@@ -152,6 +159,23 @@ class ProductoController extends Controller
 
             $absolutePath = Storage::disk('public')->path($path);
             $data['image_hash'] = ImageHashService::generateHash($absolutePath);
+
+            \App\Models\Media::create([
+                'name'        => $data['nombre'] ?? $producto->nombre,
+                'path'        => $path,
+                'mime_type'   => $file->getMimeType(),
+                'size'        => $file->getSize(),
+                'producto_id' => $producto->id,
+            ]);
+        } elseif ($request->filled('media_id')) {
+            $selectedMedia = \App\Models\Media::find($request->media_id);
+            if ($selectedMedia) {
+                $data['imagen'] = $selectedMedia->path;
+                $absolutePath = Storage::disk('public')->path($selectedMedia->path);
+                $data['image_hash'] = ImageHashService::generateHash($absolutePath);
+                $selectedMedia->producto_id = $producto->id;
+                $selectedMedia->save();
+            }
         }
 
         $producto->update($data);

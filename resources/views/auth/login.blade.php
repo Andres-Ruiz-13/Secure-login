@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <style>
+    <style nonce="{{ $cspNonce ?? '' }}">
         * {
             box-sizing: border-box;
             margin: 0;
@@ -278,7 +278,7 @@
     </main>
 
     <!-- Script funcional para el botón de mostrar/ocultar contraseña -->
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.getElementById('togglePassword').addEventListener('click', function () {
             const passwordInput = document.getElementById('password');
             const isPassword = passwordInput.type === 'password';

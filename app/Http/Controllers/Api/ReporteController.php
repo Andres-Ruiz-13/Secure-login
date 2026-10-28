@@ -27,13 +27,18 @@ class ReporteController extends Controller
             default  => "DATE(fecha)",
         };
 
-        $reporte = Venta::select(
+        $query = Venta::select(
             DB::raw("{$dateExpr} as dia"),
             DB::raw('COUNT(*) as total_transacciones'),
             DB::raw('SUM(total) as total_ventas'),
             DB::raw('AVG(total) as ticket_promedio')
-        )
-            ->groupBy('dia')
+        );
+
+        if ($request->filled('fecha')) {
+            $query->whereDate('fecha', $request->fecha);
+        }
+
+        $reporte = $query->groupBy('dia')
             ->orderBy('dia', 'desc')
             ->limit($dias)
             ->get();
@@ -93,6 +98,44 @@ class ReporteController extends Controller
                 'productos_alerta_stock_bajo'  => (int) ($resumen->productos_stock_bajo ?? 0),
             ],
         ]);
+    }
+
+    /**
+     * Reporte de compras por mes y año.
+     */
+    public function compras(Request $request): JsonResponse
+    {
+        $mes = (int) ($request->get('mes', date('m')));
+        $anio = (int) ($request->get('anio', date('Y')));
+
+        $query = \App\Models\Compra::with(['proveedor', 'usuario', 'detalles.producto'])
+            ->whereYear('fecha', $anio)
+            ->whereMonth('fecha', $mes);
+
+        $compras = $query->orderBy('fecha', 'desc')->get();
+        $totalInversion = (float) $compras->sum('total');
+
+        return response()->json([
+            'mes'             => $mes,
+            'anio'            => $anio,
+            'total_facturas'  => $compras->count(),
+            'total_inversion' => $totalInversion,
+            'compras'         => $compras,
+        ]);
+    }
+
+    /**
+     * Generación y descarga de reporte en Word (.docx) con python-docx
+     */
+    public function descargarWord(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $tipo = $request->get('tipo', 'inventario');
+        $params = $request->only(['fecha', 'desde', 'hasta', 'mes', 'anio']);
+
+        $filePath = \App\Services\ReportWordService::generate($tipo, $params);
+        $fileName = "reporte_{$tipo}_" . date('Ymd_His') . ".docx";
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
     }
 
     /**

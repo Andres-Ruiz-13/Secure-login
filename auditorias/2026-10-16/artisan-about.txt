@@ -1,0 +1,22 @@
+
+  [41;1m Error [49;22m
+
+[39;1m  Call to undefined function Illuminate\Support\mb_split()[39;22m
+
+  at [32mvendor\laravel\framework\src\Illuminate\Support\Str.php[39m:[32m1722[39m
+    1718▕         if (isset(static::$studlyCache[$key])) {
+    1719▕             return static::$studlyCache[$key];
+    1720▕         }
+    1721▕ 
+  ➜ 1722▕         $words = mb_split('\s+', static::replace(['-', '_'], ' ', $value));
+    1723▕ 
+    1724▕         $studlyWords = array_map(fn ($word) => static::ucfirst($word), $words);
+    1725▕ 
+    1726▕         return static::$studlyCache[$key] = implode($studlyWords);
+
+  [33m1   [39m[39;1mvendor\laravel\framework\src\Illuminate\Support\Manager.php[39;22m:[39;1m98[39;22m
+  [90m    Illuminate\Support\Str::studly("file")[39m
+
+  [33m2   [39m[39;1mvendor\laravel\framework\src\Illuminate\Support\Manager.php[39;22m:[39;1m78[39;22m
+  [90m    Illuminate\Support\Manager::createDriver("file")[39m
+

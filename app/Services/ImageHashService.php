@@ -14,6 +14,11 @@ class ImageHashService
             return null;
         }
 
+        // Si la extensión GD no está habilitada en el entorno PHP, proveer fallback consistente de 16 caracteres hex
+        if (! extension_loaded('gd') || ! function_exists('imagecreatetruecolor')) {
+            return substr(md5_file($filePath), 0, 16);
+        }
+
         $imageInfo = @getimagesize($filePath);
         if (! $imageInfo) {
             return null;

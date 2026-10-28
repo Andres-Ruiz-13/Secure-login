@@ -3,80 +3,138 @@
 ## Entorno
 - **Laravel:** 12.68.0
 - **PHP:** 8.2.12 (cli) ZTS Visual C++ 2019 x64
-- **Base de datos:** MySQL / MariaDB 10.4.32 (XAMPP - puerto 3306, base `inbot_system`, utf8mb4)
-- **Frontend:** Blade + Tailwind CSS + Bootstrap Icons + Vite
+- **Python:** 3.14.7 + `python-docx 1.2.0`
+- **Base de datos:** MySQL / MariaDB 10.4.32 (XAMPP - puerto 3306, base `inbot_system`, utf8mb4) / SQLite en memoria para tests
+- **Frontend:** Blade + Bootstrap 5.3 + Tailwind CSS + Bootstrap Icons + Vite
 - **Autenticación:** Laravel Sanctum (Tokens Bearer) + Sesiones Web seguras
 
 ---
 
-## Módulos del Sistema y Estado de Cierre
+## Modelos de Datos Implementados (7 Modelos Principales)
 
-- [x] **Fase 0 — Base:** Arquitectura inicial, Laravel 12 configurado, conexión a MariaDB XAMPP verificada.
-- [x] **Fase 0.1 — Login Seguro:** Rate limiting (5 intentos/minuto por email+IP), sesiones protegidas (HttpOnly, SameSite), protección contra enumeración de usuarios.
-- [x] **Módulo 1 — Banners / Hero:** Tabla `banners`, modelo, scope `activeVisible`, frontend y control de orden.
-- [x] **Módulo 2 — Servicios:** Tabla `services`, modelo, slug único, estado activo y precios en decimal.
-- [x] **Módulo 3 — Nosotros / Institucional:** Tabla `about_settings`, misión, visión, historia y valores dinámicos.
-- [x] **Módulo 4 — Categorías:** Tabla `categories`, modelo, validación de slug único y relación segura con productos.
-- [x] **Módulo 5 — Publicaciones / Noticias:** Tabla `news`, relación con multimedia, estados editoriales y frontend público.
-- [x] **Módulo 6 — Multimedia / Galería:** Tabla `media`, validación de tipo MIME real, tamaño máx 5MB, almacenamiento en `storage/app/public`, reemplazo eliminando archivo físico anterior.
-- [x] **Módulo 7 — Videos:** Tabla `videos`, incrustación segura para YouTube y Vimeo sin iframes arbitrarios.
-- [x] **Módulo 8 — Equipo:** Tabla `team_members`, administración de cargos y biografías.
-- [x] **Módulo 9 — Testimonios:** Tabla `testimonials`, calificaciones de 1 a 5 y control de visualización activa.
-- [x] **Módulo 10 — Contacto:** Tabla `contact_messages`, formulario web y API `/contacto`, mailable `ContactMessage`, plantilla Blade `#022766`, envío a admin y confirmación a usuario.
-- [x] **Módulo 11 — Redes Sociales:** Tabla `social_links`, URLs validadas y ordenables.
-- [x] **Módulo 12 — SEO:** Configuración general con metadatos y OpenGraph.
-- [x] **Módulo 13 & 14 — Usuarios, Roles y Permisos (RBAC):** Roles `admin`, `bodeguero`, `vendedor`. Middleware `role`, Policies (`ProductoPolicy`), restricción estricta de 403 Forbidden para Vendedor en creación/edición de productos.
-- [x] **Módulo 15 — Configuración General:** Tabla `site_settings`, pares clave-valor sin exponer secretos de infraestructura.
-- [x] **Módulo 16 — SMTP Administrable:** Tabla `mail_settings`, contraseñas cifradas con `Laravel Crypt`, servicio `MailConfigurationService` con fallback seguro a `.env`.
-- [x] **Módulo 17 — Recuperación de Contraseña por OTP:** Tabla `password_reset_codes`, hash del código (nunca texto plano), expiración de 10 min y límite de intentos.
-- [x] **Módulo 18 — Auditoría:** Tabla `audit_logs`, servicio `AuditService`, registro de eventos sin filtrar contraseñas ni tokens.
-- [x] **Módulo 19 — Dashboard y Estadísticas:** Panel central con métricas reales, conteo de stock bajo y actividad reciente.
-- [x] **Módulo 20 — Hardening de Seguridad:** Middleware `SecurityHeaders` (nosniff, X-Frame-Options, CSP, Referrer-Policy, HSTS), prevención de mass assignment (`$fillable` explícito), prevención de consultas N+1 con `preventLazyLoading()`.
-- [x] **Módulo 20.2 — Testing Final:** 23 pruebas automatizadas ejecutadas y aprobadas al 100%.
-- [x] **Módulo A (INBOT) — Productos e Inventario:** Código de barras único, cálculo automático de precio de venta en backend con redondeo comercial configurable en `config/inbot.php`, endpoint `GET /api/stock_bajo`, paginación y filtros.
-- [x] **Módulo B (INBOT) — Proveedores y Compras:** NIT único, compra cabecera + detalle, incremento atómico de existencias dentro de transacción DB.
-- [x] **Módulo C (INBOT) — Ventas y Facturación:** Transacción con `lockForUpdate()`, verificación de existencias, cálculo estricto en backend, reversión total con 422 si falta stock, reportes diarios y mensuales y exportación CSV.
-- [x] **Módulo D (INBOT) — Asistente Móvil y Chatbot:** Búsqueda por código de barras, nombre, reconocimiento visual por Average Hash (aHash de 64 bits con PHP GD nativo y distancia de Hamming <= 10) y chatbot inteligente en tiempo real.
-- [x] **Módulo F (INBOT) — Base de Datos Híbrida:** MariaDB XAMPP local (`inbot_system`), PostgreSQL en la nube con `DB_URL`/`DATABASE_URL` y SQLite en memoria para tests.
+1. **`Categoria` (`Category`):**
+   - Agrupa productos (ej. ASEO, FERRETERÍA).
+   - Relación: Una categoría tiene muchos productos (`hasMany(Producto::class)`).
+   - Atributos: `id`, `name`/`nombre`, `slug`, `description`/`descripcion`, `is_active`, timestamps.
+2. **`Proveedor`:**
+   - Empresa o distribuidor al que se le compra (tiene NIT único).
+   - Relaciones: Un proveedor tiene muchas facturas de compra (`hasMany(Compra::class)` / `facturasCompra()`) y muchos productos.
+   - Atributos: `id`, `nit`, `nombre`, `telefono`, `direccion`, `correo`, `is_active`, timestamps.
+3. **`Producto`:**
+   - Código de barras único, nombre, descripción, categoría, precio de compra, precio de venta (calculado automáticamente en backend), stock actual y stock mínimo.
+   - Relaciones: `belongsTo(Categoria::class)`, `belongsTo(Proveedor::class)`, `hasMany(DetalleCompra::class)`, `hasMany(DetalleVenta::class)`.
+   - Atributos: `id`, `codigo_barras`, `nombre`, `descripcion`, `categoria_id`, `proveedor_id`, `precio_compra`, `porcentaje_ganancia`, `precio_venta`, `stock_actual`, `stock_minimo`, `imagen`, `image_hash`, `is_active`, timestamps.
+4. **`FacturaCompra` (`Compra`):**
+   - Cabecera de compra a proveedor (número de factura único, proveedor, fecha, observaciones, total, usuario).
+   - Relaciones: `belongsTo(Proveedor::class)`, `belongsTo(User::class)`, `hasMany(DetalleFacturaCompra::class)`.
+5. **`DetalleFacturaCompra` (`DetalleCompra`):**
+   - Cada línea de la factura de compra (producto, cantidad, precio unitario, subtotal).
+   - Relaciones: `belongsTo(FacturaCompra::class)`, `belongsTo(Producto::class)`.
+6. **`Venta`:**
+   - Cabecera de venta a cliente (número de factura, método de pago, fecha, total, cliente, usuario/vendedor).
+   - Relaciones: `belongsTo(User::class)`, `hasMany(DetalleVenta::class)`.
+7. **`DetalleVenta`:**
+   - Cada línea de una factura de venta (producto, cantidad, precio unitario, subtotal).
+   - Relaciones: `belongsTo(Venta::class)`, `belongsTo(Producto::class)`.
 
 ---
 
-## Módulo Actual
-**CIERRE, AUDITORÍA TÉCNICA Y DOCUMENTACIÓN FINAL**
+## Matriz de Roles y Permisos (100% Funcional y Verificada)
+
+| Acción | Administrador | Bodeguero | Vendedor |
+| :--- | :---: | :---: | :---: |
+| Iniciar y cerrar sesión (Web & API) | **Sí** | **Sí** | **Sí** |
+| Consultar productos, categorías, proveedores (lectura) | **Sí** | **Sí** | **Sí** |
+| Crear o editar productos, categorías y proveedores | **Sí** | **Sí** | **No** (403) |
+| Registrar facturas de compra (multi-fila / producto nuevo) | **Sí** | **Sí** | **No** (403) |
+| Registrar ventas (descuento atómico de stock) | **Sí** | **No** (403) | **Sí** |
+| Consulta de ventas del día | **Sí** | **No** | **Sí** |
+| Reportes de inventario y compras | **Sí** | **Sí** | **No** |
+| Panel `/admin/` y gestión de usuarios (creación y asignación de rol) | **Sí** | **No** (403) | **No** (403) |
 
 ---
 
-## Decisiones Técnicas Vigentes
-1. **Precio de venta inmutable desde el frontend:** El precio de venta se calcula de forma obligatoria en el backend mediante `PricingService` aplicando la fórmula `precio_compra * (1 + ganancia / 100)` con redondeo comercial configurable (por defecto múltiplo de 50).
-2. **Concurrencia en ventas:** Se implementó bloqueo pesimista de filas (`lockForUpdate()`) en cada producto dentro de `DB::transaction()` para garantizar que dos ventas simultáneas no generen stock negativo ni inconsistencias.
-3. **Reconocimiento visual de imágenes:** Se implementó el algoritmo Average Hash (aHash) de 64 bits en PHP GD nativo sin depender de bibliotecas externas ni Python. El hash se precalcula e indexa en la base de datos al subir el producto, logrando consultas en milisegundos mediante distancia de Hamming.
-4. **Seguridad y secretos:** Contraseñas SMTP cifradas bidireccionalmente con `Crypt::encryptString`; contraseñas de usuario hasheadas con `bcrypt`; códigos OTP protegidos con hash unidireccional.
-5. **Cero exposición de datos sensibles en Auditoría:** `AuditService` filtra automáticamente claves sensibles (`password`, `token`, `otp`, `secret`, `api_key`).
+## Funcionalidades y Flujos Clave
+
+### 1. Precios Automáticos
+- Fórmula inmutable calculada en backend:
+  $$\text{precio\_venta} = \text{precio\_compra} \times \left(1 + \frac{\text{porcentaje\_ganancia}}{100}\right)$$
+- Redondeo comercial configurable en `config/inbot.php` (por defecto múltiplo comercial de 50 o 2 decimales).
+
+### 2. Facturas de Compra en 1 Solo Paso (Flujo 9.1 & `/facturas-compra-lista/`)
+- Registro unificado de cabecera: número de factura, proveedor, fecha y margen de ganancia global (por defecto 30%).
+- Múltiples filas dinámicas donde se puede alternar entre:
+  * **Producto existente:** Seleccionable del catálogo, actualiza último precio de compra y suma unidades al stock.
+  * **Producto nuevo:** Código de barras (opcional o autogenerado), nombre, descripción opcional, categoría, cantidad y costo unitario. Al guardar, el sistema crea el producto en la base de datos, calcula su precio de venta, fija stock inicial y emite la factura con su detalle.
+
+### 3. Facturación de Ventas en Tiempo Real (Flujo 9.2 & `/ventas-lista/`)
+- Módulo de caja con búsqueda inmediata por código de barras (lector USB/cámara) o nombre de producto.
+- Bloqueo pesimista de filas (`lockForUpdate()`) en base de datos.
+- Validación obligatoria de existencias: si no hay suficiente stock disponible, rechaza la transacción con HTTP 422 (`INSUFFICIENT_STOCK`) y no altera el inventario.
+- Deducción atómica e instantánea de existencias.
+- Consulta de ventas del día en tiempo real.
+
+### 4. Control de Stock y Alertas (Flujo 9.3)
+- Consulta `/api/stock_bajo` y alias `/api/core-api/productos/stock_bajo/` para listar productos donde `stock_actual <= stock_minimo`.
+
+### 5. Reportes Oficiales en Word (.docx) y CSV
+- Script independiente `generate_report.py` con motor `python-docx` y servicio Laravel `ReportWordService`:
+  * **Reporte de Inventario Completo:** Valoración al costo, valoración comercial, resumen de existencias y tabla detallada con alertas.
+  * **Reporte de Ventas Diarias:** Facturación, ticket promedio y desglose de comprobantes.
+  * **Reporte de Compras por Mes y Año:** Total invertido, proveedores abastecedores y desglose de facturas.
+- Descargable desde la interfaz CMS (`/reportes/word?tipo=...`) y API (`/api/reportes/word?tipo=...`).
+- Exportación contable en CSV (`/api/reportes/exportar-ventas-csv`).
+
+### 6. Modificación de Detalles de Producto y Atribución de Imágenes
+- **Edición Completa desde el CMS:** Botón "Editar" en la tabla de inventario que abre un modal dinámico para modificar: nombre, código de barras, descripción, categoría, proveedor, precio de compra, porcentaje de ganancia (con recálculo visual en vivo del precio de venta), stock actual, stock mínimo y estado activo.
+- **Gestión de Imagen del Producto:**
+  * Subida de nueva imagen con previsualización y cálculo de perceptual hash (aHash).
+  * Selección y reutilización de imágenes existentes en la Biblioteca Multimedia.
+  * Opción para remover/desvincular la imagen actual.
+- **Atribución Directa desde Multimedia:**
+  * Al subir una imagen a la Biblioteca Multimedia (`/admin/media`), permite atribuirla directamente a un producto específico del inventario.
+  * Tabla multimedia muestra qué producto tiene asignada cada imagen con selector rápido de vinculación/desvinculación en tiempo real (`POST /admin/media/{id}/atribuir`).
+
+### 7. Trazabilidad y Logs de Depuración
+- Registro de eventos en `logs/debug.log` (`App\Services\DebugLogService`):
+  * Compras registradas
+  * Ventas facturadas
+  * Productos actualizados y medios atribuidos
+  * Categorías y proveedores creados
+  * Usuarios administrados
 
 ---
 
-## Rutas Importantes de la API
-- `POST /api/register` — Registro de usuarios
-- `POST /api/login` — Autenticación con token Sanctum (Limitado a 5 intentos/min)
-- `GET /api/profile` — Información del usuario autenticado
-- `POST /api/logout` — Revocación del token activo
-- `GET /api/stock_bajo` — Lista de productos con stock crítico (stock_actual <= stock_minimo)
-- `GET|POST /api/productos` — CRUD de productos (Admin/Bodeguero; Vendedor recibe 403 al crear)
-- `GET|POST /api/compras` — Registro y consulta de compras a proveedores (suma stock)
-- `GET|POST /api/ventas` — Facturación de ventas (descuenta stock con lockForUpdate, 422 si stock insuficiente)
-- `GET /api/reportes/ventas-diarias` — Agregaciones de ventas por día
-- `GET /api/reportes/ventas-mensuales` — Agregaciones de ventas por mes
-- `GET /api/reportes/inventario` — Valoración económica y resumen de existencias
-- `GET /api/reportes/exportar-ventas-csv` — Descarga de archivo CSV con historial de facturas
-- `GET /api/aplicacion_movil/producto/codigo/{codigo}` — Búsqueda por código de barras
-- `GET /api/aplicacion_movil/producto/nombre` — Búsqueda predictiva por nombre
-- `POST /api/aplicacion_movil/producto/imagen` — Reconocimiento visual aHash
-- `POST /api/aplicacion_movil/chatbot` — Asistente conversacional de existencias
-- `POST /contacto` y `POST /api/contacto` — Formulario de contacto con doble correo (admin y usuario)
+## Rutas Importantes del Sistema
+
+### Web (CMS y Vistas Dedicadas)
+- `GET /` — Catálogo público y portal
+- `GET /login` y `POST /login` — Autenticación web
+- `GET /dashboard` — Panel CMS principal con métricas, tabs de inventario, compras, ventas, proveedores, categorías, usuarios y reportes
+- `PUT /cms/productos/{id}` — Actualización de detalles de producto e imagen
+- `POST /admin/media` — Subida de archivos multimedia con opción de atribuir a producto
+- `POST /admin/media/{id}/atribuir` — Vinculación directa de medios existentes a productos
+- `GET /facturas-compra-lista/` — Flujo 9.1: Abastecimiento y creación rápida multi-fila
+- `GET /ventas-lista/` — Flujo 9.2: Módulo de caja, búsqueda por lector de código de barras y ventas del día
+- `GET /reportes/word` — Generación de reportes ejecutivos Word (.docx)
+
+### API RESTful (Tokens Sanctum)
+- `POST /api/login` & `POST /api/logout`
+- `GET|POST|PUT|DELETE /api/productos`
+- `GET /api/stock_bajo` & `GET /api/core-api/productos/stock_bajo/`
+- `GET|POST|PUT|DELETE /api/categorias`
+- `GET|POST|PUT|DELETE /api/proveedores`
+- `GET|POST /api/compras` (y alias `api/facturas-compra`)
+- `GET|POST /api/ventas` & `GET /api/ventas/hoy`
+- `GET /api/reportes/ventas-diarias`
+- `GET /api/reportes/ventas-mensuales`
+- `GET /api/reportes/inventario`
+- `GET /api/reportes/compras`
+- `GET /api/reportes/word`
+- `GET|POST|PUT|DELETE /api/admin/users` (Gestión de usuarios Admin)
 
 ---
 
-## Última Prueba Exitosa
-- **Fecha:** 2026-10-01 18:48:11
+## Estado de Pruebas Automatizadas
 - **Comando:** `php artisan test`
-- **Resultado:** 23 pruebas pasadas, 0 fallidas (89 aserciones en 1.27 segundos).
+- **Resultado:** **36 pruebas pasadas al 100%, 0 fallidas (164 aserciones).**

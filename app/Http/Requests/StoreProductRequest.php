@@ -16,6 +16,7 @@ class StoreProductRequest extends FormRequest
         return [
             'codigo_barras'       => ['required', 'string', 'max:100', 'unique:productos,codigo_barras'],
             'nombre'              => ['required', 'string', 'max:255'],
+            'descripcion'         => ['nullable', 'string', 'max:1000'],
             'categoria_id'        => ['nullable', 'exists:categories,id'],
             'proveedor_id'        => ['nullable', 'exists:proveedores,id'],
             'stock_actual'        => ['nullable', 'integer', 'min:0'],

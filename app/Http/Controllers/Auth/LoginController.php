@@ -23,23 +23,33 @@ class LoginController extends Controller
 
     public function register(Request $request): RedirectResponse
     {
-        // 1. Asigna el resultado de la validación a $validated
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'email', 'unique:users,email'],
+            'password' => ['required', 'min:8', 'confirmed'],
+            'role'     => ['required', 'string', 'in:admin,bodeguero,vendedor,Administrador,Bodeguero,Vendedor'],
+            'phone'    => ['nullable', 'string', 'max:30'],
         ]);
 
-        // 2. Corregido 'email' y Hash::make($validated['password'])
-        User::create([
+        $role = strtolower($validated['role']);
+
+        $user = User::create([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
+            'role'     => $role,
+            'phone'    => $validated['phone'] ?? null,
             'password' => Hash::make($validated['password']),
+        ]);
+
+        \App\Services\DebugLogService::log('USUARIO_REGISTRADO_WEB', [
+            'id'    => $user->id,
+            'email' => $user->email,
+            'role'  => $user->role,
         ]);
 
         return redirect()
             ->route('login')
-            ->with('success', 'Registro exitoso. ¡Inicia sesión!');
+            ->with('success', "Registro exitoso con perfil '{$user->role}'. ¡Inicia sesión con tu nueva cuenta!");
     }
 
     public function store(Request $request): RedirectResponse

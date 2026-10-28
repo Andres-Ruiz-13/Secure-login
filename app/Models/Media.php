@@ -12,13 +12,23 @@ class Media extends Model
         'path',
         'mime_type',
         'size',
+        'producto_id',
         'active',
     ];
 
     protected $casts = [
-        'active' => 'boolean',
-        'size'   => 'integer',
+        'active'      => 'boolean',
+        'size'        => 'integer',
+        'producto_id' => 'integer',
     ];
+
+    /**
+     * Relationship with Producto
+     */
+    public function producto()
+    {
+        return $this->belongsTo(Producto::class, 'producto_id');
+    }
 
     /**
      * Relationship with News (Section 5.12)

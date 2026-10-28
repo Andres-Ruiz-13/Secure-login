@@ -23,13 +23,17 @@ class UpdateProductRequest extends FormRequest
         return [
             'codigo_barras'       => ['sometimes', 'required', 'string', 'max:100', Rule::unique('productos', 'codigo_barras')->ignore($productoId)],
             'nombre'              => ['sometimes', 'required', 'string', 'max:255'],
+            'descripcion'         => ['nullable', 'string', 'max:1000'],
             'categoria_id'        => ['nullable', 'exists:categories,id'],
             'proveedor_id'        => ['nullable', 'exists:proveedores,id'],
             'stock_actual'        => ['nullable', 'integer', 'min:0'],
             'stock_minimo'        => ['nullable', 'integer', 'min:0'],
             'precio_compra'       => ['sometimes', 'required', 'numeric', 'min:0'],
             'porcentaje_ganancia' => ['nullable', 'numeric', 'min:0'],
-            'imagen'              => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'imagen'              => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'media_id'            => ['nullable', 'exists:media,id'],
+            'eliminar_imagen'     => ['nullable', 'boolean'],
+            'is_active'           => ['nullable', 'boolean'],
         ];
     }
 }

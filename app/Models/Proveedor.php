@@ -34,4 +34,9 @@ class Proveedor extends Model
     {
         return $this->hasMany(Compra::class, 'proveedor_id');
     }
+
+    public function facturasCompra(): HasMany
+    {
+        return $this->compras();
+    }
 }

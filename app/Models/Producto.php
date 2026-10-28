@@ -18,6 +18,7 @@ class Producto extends Model
     protected $fillable = [
         'codigo_barras',
         'nombre',
+        'descripcion',
         'categoria_id',
         'proveedor_id',
         'imagen',
@@ -67,9 +68,35 @@ class Producto extends Model
         return $this->hasMany(DetalleCompra::class, 'producto_id');
     }
 
+    public function detallesFacturaCompra(): HasMany
+    {
+        return $this->detallesCompra();
+    }
+
     public function detallesVenta(): HasMany
     {
         return $this->hasMany(DetalleVenta::class, 'producto_id');
+    }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(Media::class, 'producto_id');
+    }
+
+    /**
+     * URL pública relativa o absoluta para la imagen del producto
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (! $this->imagen) {
+            return null;
+        }
+
+        if (str_starts_with($this->imagen, 'http://') || str_starts_with($this->imagen, 'https://')) {
+            return $this->imagen;
+        }
+
+        return '/storage/' . ltrim($this->imagen, '/');
     }
 
     /**

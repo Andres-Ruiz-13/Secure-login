@@ -19,12 +19,24 @@ class AuthController extends Controller
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+            'role'     => ['nullable', 'string', 'in:admin,bodeguero,vendedor,Administrador,Bodeguero,Vendedor'],
+            'phone'    => ['nullable', 'string', 'max:30'],
         ]);
+
+        $role = strtolower($validated['role'] ?? 'vendedor');
 
         $user = User::create([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
+            'role'     => $role,
+            'phone'    => $validated['phone'] ?? null,
             'password' => Hash::make($validated['password']),
+        ]);
+
+        \App\Services\DebugLogService::log('USUARIO_REGISTRADO_API', [
+            'id'    => $user->id,
+            'email' => $user->email,
+            'role'  => $user->role,
         ]);
 
         // Nunca devolver el password ni el hash en la respuesta.
@@ -34,6 +46,7 @@ class AuthController extends Controller
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
+                'role'  => $user->role,
             ],
         ], 201);
     }

@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
     
-    <style>
+    <style nonce="{{ $cspNonce ?? '' }}">
         :root {
             --brand-primary: #0284c7;
             --brand-primary-dark: #0369a1;
@@ -113,7 +113,7 @@
             overflow: hidden;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             display: flex;
-            flex-column: column;
+            flex-direction: column;
             height: 100%;
         }
 
@@ -124,30 +124,40 @@
         }
 
         .product-img-wrapper {
-            height: 190px;
-            background: #f1f5f9;
+            width: 100%;
+            height: 200px;
+            background: #f8fafc;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
+            flex-shrink: 0;
+            border-bottom: 1px solid #f1f5f9;
         }
 
         .product-img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            padding: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-img {
+            transform: scale(1.05);
         }
 
         .product-badge-stock {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 10px;
+            right: 10px;
             font-size: 0.72rem;
             font-weight: 700;
             padding: 0.35rem 0.65rem;
             border-radius: 9999px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            z-index: 2;
         }
 
         .feature-box {
@@ -397,12 +407,15 @@
                         <div class="col-md-6 col-lg-4 col-xl-3 product-item" data-nombre="{{ strtolower($prod->nombre) }}" data-codigo="{{ $prod->codigo_barras }}">
                             <div class="product-card">
                                 <div class="product-img-wrapper">
-                                    @if($prod->imagen)
-                                        <img src="{{ Storage::url($prod->imagen) }}" alt="{{ $prod->nombre }}" class="product-img">
+                                    @php
+                                        $imgUrl = $prod->image_url;
+                                    @endphp
+                                    @if($imgUrl)
+                                        <img src="{{ $imgUrl }}" alt="{{ $prod->nombre }}" class="product-img" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-center text-muted p-4\'><i class=\'bi bi-box-seam display-5 text-secondary opacity-50\'></i><div class=\'small mt-2 text-muted fw-semibold\'>Imagen no disponible</div></div>';">
                                     @else
                                         <div class="text-center text-muted p-4">
-                                            <i class="bi bi-box-seam display-5 text-secondary"></i>
-                                            <div class="small mt-1 text-muted">Sin foto cargada</div>
+                                            <i class="bi bi-box-seam display-5 text-secondary opacity-50"></i>
+                                            <div class="small mt-2 text-muted fw-semibold">Sin foto cargada</div>
                                         </div>
                                     @endif
 
@@ -418,34 +431,34 @@
                                 </div>
 
                                 <div class="p-3 d-flex flex-column flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="badge bg-light text-secondary border small">
+                                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                        <span class="badge bg-light text-secondary border small text-truncate" style="max-width: 62%;" title="{{ $prod->categoria->name ?? 'General' }}">
                                             {{ $prod->categoria->name ?? 'General' }}
                                         </span>
-                                        <span class="mono text-muted small">
+                                        <span class="mono text-muted small flex-shrink-0">
                                             <i class="bi bi-upc"></i> {{ $prod->codigo_barras }}
                                         </span>
                                     </div>
 
-                                    <h5 class="fw-bold fs-6 text-dark mb-2 text-truncate" title="{{ $prod->nombre }}">
+                                    <h5 class="fw-bold fs-6 text-dark mb-1 text-truncate" title="{{ $prod->nombre }}">
                                         {{ $prod->nombre }}
                                     </h5>
 
-                                    <div class="text-muted small mb-3">
+                                    <div class="text-muted small mb-3 text-truncate" title="{{ $prod->proveedor->nombre ?? 'N/A' }}">
                                         <i class="bi bi-building me-1"></i> {{ $prod->proveedor->nombre ?? 'N/A' }}
                                     </div>
 
-                                    <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                                    <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-end gap-2">
                                         <div>
-                                            <div class="text-muted small" style="font-size: 0.75rem;">PRECIO VENTA</div>
-                                            <div class="fs-5 fw-bold text-primary mono">
+                                            <div class="text-muted fw-bold" style="font-size: 0.68rem; letter-spacing: 0.04em;">PRECIO VENTA</div>
+                                            <div class="fs-5 fw-bold text-primary mono text-nowrap">
                                                 ${{ number_format($prod->precio_venta, 2) }}
                                             </div>
                                         </div>
-                                        <div class="text-end">
-                                            <div class="text-muted small" style="font-size: 0.75rem;">DISPONIBLE</div>
-                                            <div class="fw-bold {{ $esStockBajo ? 'text-danger' : 'text-dark' }}">
-                                                {{ $prod->stock_actual }} <span class="small text-muted font-normal">uds</span>
+                                        <div class="text-end flex-shrink-0">
+                                            <div class="text-muted fw-bold" style="font-size: 0.68rem; letter-spacing: 0.04em;">DISPONIBLE</div>
+                                            <div class="fw-bold text-nowrap {{ $esStockBajo ? 'text-danger' : 'text-dark' }}">
+                                                {{ $prod->stock_actual }} <span class="small text-muted fw-normal">uds</span>
                                             </div>
                                         </div>
                                     </div>
@@ -700,8 +713,8 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         function filterProducts() {
             const query = document.getElementById('liveSearchInput').value.toLowerCase().trim();
             const items = document.querySelectorAll('.product-item');
