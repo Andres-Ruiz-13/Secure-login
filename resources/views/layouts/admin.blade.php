@@ -247,7 +247,11 @@
 
             <!-- MÓDULOS DE BODEGUERO -->
             @if(auth()->user()->isBodeguero() || auth()->user()->isAdmin())
-                <div class="nav-section-title">Almacén y Compras</div>
+                <div class="nav-section-title">Almacén e Inventarios</div>
+                <a href="{{ route('bodegas.index') }}" class="nav-item-link {{ request()->routeIs('bodegas.*') ? 'active' : '' }}">
+                    <i class="bi bi-building text-info"></i>
+                    <span class="sidebar-text">Bodegas & Kardex</span>
+                </a>
                 <a href="{{ route('facturas.compra.lista') }}" class="nav-item-link {{ request()->routeIs('facturas.compra.lista') ? 'active' : '' }}">
                     <i class="bi bi-truck text-primary"></i>
                     <span class="sidebar-text">Facturas Compra</span>

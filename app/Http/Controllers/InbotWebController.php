@@ -9,6 +9,8 @@ use App\Models\CompanySetting;
 use App\Models\Compra;
 use App\Models\DetalleCompra;
 use App\Models\DetalleVenta;
+use App\Models\InventoryMovement;
+use App\Models\InventoryStock;
 use App\Models\Media;
 use App\Models\News;
 use App\Models\Producto;
@@ -519,6 +521,23 @@ class InbotWebController extends Controller
                     'subtotal'        => $subtotal,
                 ]);
 
+                // Registrar en Kardex de inventarios
+                $defaultWarehouse = Warehouse::first();
+                if ($defaultWarehouse) {
+                    $stockAnterior = max(0, $producto->stock_actual - $cantidad);
+                    InventoryMovement::create([
+                        'producto_id'          => $producto->id,
+                        'warehouse_id'         => $defaultWarehouse->id,
+                        'tipo'                 => 'compra',
+                        'cantidad'             => $cantidad,
+                        'stock_anterior'       => $stockAnterior,
+                        'stock_nuevo'          => $producto->stock_actual,
+                        'documento_referencia' => $compra->numero_factura,
+                        'motivo'               => 'Ingreso por compra a proveedor (Factura ' . $compra->numero_factura . ')',
+                        'user_id'              => $user->id,
+                    ]);
+                }
+
                 $totalCompra += $subtotal;
             }
 
@@ -613,6 +632,22 @@ class InbotWebController extends Controller
                     ]);
 
                     $det['producto']->decrement('stock_actual', $det['cantidad']);
+
+                    // Registrar en Kardex de inventarios
+                    $defaultWarehouse = Warehouse::first();
+                    if ($defaultWarehouse) {
+                        InventoryMovement::create([
+                            'producto_id'          => $det['producto']->id,
+                            'warehouse_id'         => $defaultWarehouse->id,
+                            'tipo'                 => 'venta',
+                            'cantidad'             => $det['cantidad'],
+                            'stock_anterior'       => $det['producto']->stock_actual + $det['cantidad'],
+                            'stock_nuevo'          => $det['producto']->stock_actual,
+                            'documento_referencia' => $venta->numero_factura,
+                            'motivo'               => 'Salida por venta en caja (Factura ' . $venta->numero_factura . ')',
+                            'user_id'              => $request->user()->id,
+                        ]);
+                    }
                 }
             });
         } catch (ValidationException $e) {

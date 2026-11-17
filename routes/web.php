@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NewsController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\WarehouseController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\InbotWebController;
@@ -55,6 +56,22 @@ Route::middleware('auth')->group(function () {
 
     // Descarga de Reportes en Word (.docx)
     Route::get('/reportes/word', [InbotWebController::class, 'descargarReporteWord'])->name('reportes.word');
+
+    // Módulo FASE 4: Bodegas, Transferencias (6 estados), Ajustes y Kardex
+    Route::middleware('role:admin,bodeguero')->group(function () {
+        Route::get('/bodegas', [WarehouseController::class, 'index'])->name('bodegas.index');
+        Route::post('/bodegas', [WarehouseController::class, 'store'])->name('bodegas.store')->middleware('role:admin');
+        Route::put('/bodegas/{warehouse}', [WarehouseController::class, 'update'])->name('bodegas.update')->middleware('role:admin');
+
+        Route::post('/inventario/transferencias', [WarehouseController::class, 'storeTransfer'])->name('inventory.transfers.store');
+        Route::post('/inventario/transferencias/{transfer}/aprobar', [WarehouseController::class, 'approveTransfer'])->name('inventory.transfers.approve');
+        Route::post('/inventario/transferencias/{transfer}/recibir', [WarehouseController::class, 'receiveTransfer'])->name('inventory.transfers.receive');
+        Route::post('/inventario/transferencias/{transfer}/rechazar', [WarehouseController::class, 'rejectTransfer'])->name('inventory.transfers.reject');
+
+        Route::post('/inventario/ajustes', [WarehouseController::class, 'storeAdjustment'])->name('inventory.adjustments.store');
+        Route::post('/inventario/ajustes/{adjustment}/aprobar', [WarehouseController::class, 'approveAdjustment'])->name('inventory.adjustments.approve')->middleware('role:admin');
+        Route::post('/inventario/ajustes/{adjustment}/rechazar', [WarehouseController::class, 'rejectAdjustment'])->name('inventory.adjustments.reject')->middleware('role:admin');
+    });
 
     // Gestión de Usuarios y Roles (Exclusivo Administrador)
     Route::middleware('role:admin')->group(function () {
