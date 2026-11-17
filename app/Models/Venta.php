@@ -16,6 +16,8 @@ class Venta extends Model
     protected $fillable = [
         'numero_factura',
         'user_id',
+        'cash_session_id',
+        'warehouse_id',
         'metodo_pago',
         'total',
         'fecha',
@@ -31,6 +33,16 @@ class Venta extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function cashSession(): BelongsTo
+    {
+        return $this->belongsTo(CashSession::class, 'cash_session_id');
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_id');
     }
 
     public function detalles(): HasMany

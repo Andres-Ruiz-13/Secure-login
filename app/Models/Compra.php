@@ -17,6 +17,7 @@ class Compra extends Model
         'numero_factura',
         'proveedor_id',
         'user_id',
+        'warehouse_id',
         'total',
         'fecha',
         'observaciones',
@@ -35,6 +36,11 @@ class Compra extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_id');
     }
 
     public function detalles(): HasMany

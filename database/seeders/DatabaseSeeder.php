@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             InbotSystemSeeder::class,
             MediaNewsSeeder::class,
+            EnterpriseArchitectureSeeder::class,
         ]);
     }
 }

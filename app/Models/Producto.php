@@ -83,6 +83,29 @@ class Producto extends Model
         return $this->hasMany(Media::class, 'producto_id');
     }
 
+    public function inventoryStocks(): HasMany
+    {
+        return $this->hasMany(InventoryStock::class, 'producto_id');
+    }
+
+    public function movements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class, 'producto_id');
+    }
+
+    public function adjustments(): HasMany
+    {
+        return $this->hasMany(InventoryAdjustment::class, 'producto_id');
+    }
+
+    /**
+     * Obtiene el stock disponible en una bodega específica.
+     */
+    public function stockEnBodega(int $warehouseId): int
+    {
+        return (int) ($this->inventoryStocks()->where('warehouse_id', $warehouseId)->value('stock_actual') ?? 0);
+    }
+
     /**
      * URL pública relativa o absoluta para la imagen del producto
      */

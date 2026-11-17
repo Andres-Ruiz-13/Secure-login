@@ -44,11 +44,94 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if the user is a vendedor.
+     * Check if the user is a vendedor o cajero.
      */
     public function isVendedor(): bool
     {
-        return in_array($this->role, ['vendedor', 'Vendedor'], true);
+        return in_array($this->role, ['vendedor', 'Vendedor', 'cajero', 'Cajero'], true);
+    }
+
+    /**
+     * Check if the user is a cajero (alias de vendedor).
+     */
+    public function isCajero(): bool
+    {
+        return $this->isVendedor();
+    }
+
+    /**
+     * Nombre formal y legible del rol.
+     */
+    public function getRoleTitleAttribute(): string
+    {
+        return match (strtolower($this->role ?? 'customer')) {
+            'admin', 'superadmin', 'administrador' => 'Administrador',
+            'bodeguero' => 'Bodeguero',
+            'cajero', 'vendedor' => 'Cajero / Punto de Venta',
+            default => 'Cliente / Usuario',
+        };
+    }
+
+    /**
+     * Color característico de la interfaz según el rol.
+     */
+    public function getRoleColorAttribute(): string
+    {
+        return match (strtolower($this->role ?? 'customer')) {
+            'admin', 'superadmin', 'administrador' => '#dc2626', // Rojo Carmesí
+            'bodeguero' => '#2563eb',                           // Azul Océano
+            'cajero', 'vendedor' => '#059669',                   // Verde Esmeralda
+            default => '#64748b',                                // Gris pizarra
+        };
+    }
+
+    /**
+     * Clase CSS de badge para el rol.
+     */
+    public function getRoleBadgeClassAttribute(): string
+    {
+        return match (strtolower($this->role ?? 'customer')) {
+            'admin', 'superadmin', 'administrador' => 'bg-danger text-white shadow-sm',
+            'bodeguero' => 'bg-primary text-white shadow-sm',
+            'cajero', 'vendedor' => 'bg-success text-white shadow-sm',
+            default => 'bg-secondary text-white shadow-sm',
+        };
+    }
+
+    /**
+     * Icono representativo del rol.
+     */
+    public function getRoleIconAttribute(): string
+    {
+        return match (strtolower($this->role ?? 'customer')) {
+            'admin', 'superadmin', 'administrador' => 'bi-shield-lock-fill',
+            'bodeguero' => 'bi-boxes',
+            'cajero', 'vendedor' => 'bi-cash-coin',
+            default => 'bi-person',
+        };
+    }
+
+    public function warehouses()
+    {
+        return $this->belongsToMany(Warehouse::class, 'warehouse_users', 'user_id', 'warehouse_id')
+            ->withTimestamps();
+    }
+
+    public function cashSessions()
+    {
+        return $this->hasMany(CashSession::class, 'user_id');
+    }
+
+    public function currentCashSession()
+    {
+        return $this->hasOne(CashSession::class, 'user_id')
+            ->where('estado', 'abierta')
+            ->latest('opened_at');
+    }
+
+    public function newsReads()
+    {
+        return $this->hasMany(NewsRead::class, 'user_id');
     }
 
     /**
