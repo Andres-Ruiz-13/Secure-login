@@ -188,6 +188,82 @@
         .badge-priority-alta { background-color: #f97316; color: white; }
         .badge-priority-normal { background-color: #0284c7; color: white; }
         .badge-priority-baja { background-color: #64748b; color: white; }
+
+        /* Modales 100% Sólidos y Opacos (Sin transparencias en Modo Claro ni Oscuro) */
+        .modal {
+            background-color: transparent !important;
+        }
+
+        .modal-dialog {
+            z-index: 1055 !important;
+        }
+
+        .modal-content {
+            opacity: 1 !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        [data-bs-theme="dark"] .modal-header .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        [data-bs-theme="dark"] .modal-content {
+            background-color: #111827 !important;
+            color: #f8fafc !important;
+            border: 1px solid #374151 !important;
+        }
+
+        [data-bs-theme="dark"] .modal-header,
+        [data-bs-theme="dark"] .modal-body,
+        [data-bs-theme="dark"] .modal-footer {
+            background-color: #111827 !important;
+            color: #f8fafc !important;
+            border-color: #374151 !important;
+        }
+
+        [data-bs-theme="dark"] .modal-footer.bg-light,
+        [data-bs-theme="dark"] .modal-body .bg-light,
+        [data-bs-theme="dark"] .modal-body .alert-light {
+            background-color: #1f2937 !important;
+            color: #f1f5f9 !important;
+            border-color: #374151 !important;
+        }
+
+        [data-bs-theme="dark"] .modal-content .form-control,
+        [data-bs-theme="dark"] .modal-content .form-select {
+            background-color: #1f2937 !important;
+            color: #f8fafc !important;
+            border-color: #4b5563 !important;
+        }
+
+        [data-bs-theme="dark"] .modal-content .form-control:focus,
+        [data-bs-theme="dark"] .modal-content .form-select:focus {
+            background-color: #1f2937 !important;
+            color: #ffffff !important;
+            border-color: #38bdf8 !important;
+        }
+
+        [data-bs-theme="light"] .modal-content {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+
+        [data-bs-theme="light"] .modal-header,
+        [data-bs-theme="light"] .modal-body,
+        [data-bs-theme="light"] .modal-footer {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.75 !important;
+            background-color: #000000 !important;
+        }
     </style>
     @stack('styles')
 </head>
@@ -348,33 +424,59 @@
                 </button>
 
                 <!-- Menú de Notificaciones -->
+                @php
+                    $sysNotifications = \App\Models\SystemNotification::paraRol(auth()->user()->role)->noLeidas()->latest()->take(6)->get();
+                    $unreadCount = $sysNotifications->count();
+                @endphp
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary rounded-circle position-relative p-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 36px; height: 36px;">
+                    <button class="btn btn-sm btn-outline-secondary rounded-circle position-relative p-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 36px; height: 36px;" title="Centro de Alertas y Notificaciones">
                         <i class="bi bi-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                            <span class="visually-hidden">Alertas</span>
-                        </span>
+                        @if($unreadCount > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                {{ $unreadCount }}
+                                <span class="visually-hidden">Alertas no leídas</span>
+                            </span>
+                        @endif
                     </button>
-                    <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 320px; border-radius: 1rem; overflow: hidden;">
+                    <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 340px; border-radius: 1rem; overflow: hidden;">
                         <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
-                            <h6 class="fw-bold mb-0 text-dark">Centro de Alertas</h6>
-                            <span class="badge bg-primary rounded-pill">Activas</span>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">Centro de Alertas</h6>
+                                <small class="text-muted" style="font-size: 0.72rem;">{{ $unreadCount }} pendientes para {{ auth()->user()->role_title }}</small>
+                            </div>
+                            @if($unreadCount > 0)
+                                <form action="{{ route('notifications.mark-all-read') }}" method="POST" class="m-0">
+                                    @csrf
+                                    <button type="submit" class="btn btn-link btn-sm p-0 text-primary text-decoration-none" style="font-size: 0.75rem;">
+                                        Limpiar todas
+                                    </button>
+                                </form>
+                            @endif
                         </div>
-                        <div class="p-2" style="max-height: 280px; overflow-y: auto;">
-                            <a href="{{ route('dashboard') }}#seccionNews" class="dropdown-item p-2 rounded-2 d-flex gap-2 align-items-start">
-                                <span class="p-1 rounded bg-info-subtle text-info mt-1"><i class="bi bi-megaphone"></i></span>
-                                <div>
-                                    <div class="fw-semibold small text-truncate">Revisar Comunicados Internos</div>
-                                    <small class="text-muted" style="font-size: 0.75rem;">Nuevas publicaciones del CMS</small>
+                        <div class="p-2" style="max-height: 300px; overflow-y: auto;">
+                            @forelse($sysNotifications as $notif)
+                                <div class="p-2 rounded-2 border-bottom d-flex gap-2 align-items-start">
+                                    <span class="p-1 rounded bg-{{ $notif->tipo ?? 'primary' }}-subtle text-{{ $notif->tipo ?? 'primary' }} mt-1">
+                                        <i class="bi {{ $notif->icono ?? 'bi-bell' }}"></i>
+                                    </span>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div class="fw-semibold small text-truncate">{{ $notif->titulo }}</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">{{ $notif->mensaje }}</div>
+                                        <small class="text-secondary mono" style="font-size: 0.68rem;">{{ $notif->created_at->diffForHumans() }}</small>
+                                    </div>
+                                    <form action="{{ route('notifications.read', $notif->id) }}" method="POST" class="m-0">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm p-0 px-1 border-0" title="Marcar como leída">
+                                            <i class="bi bi-check2"></i>
+                                        </button>
+                                    </form>
                                 </div>
-                            </a>
-                            <a href="{{ route('dashboard') }}#seccionStockBajo" class="dropdown-item p-2 rounded-2 d-flex gap-2 align-items-start">
-                                <span class="p-1 rounded bg-warning-subtle text-warning mt-1"><i class="bi bi-exclamation-triangle"></i></span>
-                                <div>
-                                    <div class="fw-semibold small text-truncate">Supervisar Stock Mínimo</div>
-                                    <small class="text-muted" style="font-size: 0.75rem;">Alerta preventiva de inventario</small>
+                            @empty
+                                <div class="p-3 text-center text-muted small">
+                                    <i class="bi bi-check-circle fs-3 text-success d-block mb-1"></i>
+                                    No tienes notificaciones pendientes.
                                 </div>
-                            </a>
+                            @endforelse
                         </div>
                     </div>
                 </div>
@@ -431,6 +533,7 @@
 
     <!-- Scripts Esenciales con SRI y Nonce Criptográfico CSP -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script nonce="{{ $cspNonce ?? '' }}">
         // 1. Alternador de Modo Claro / Oscuro con persistencia en localStorage
         const htmlElement = document.documentElement;

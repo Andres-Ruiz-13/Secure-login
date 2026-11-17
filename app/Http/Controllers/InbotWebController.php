@@ -134,8 +134,8 @@ class InbotWebController extends Controller
 
         // 3. Bodegas y Cajas físicas
         $warehouses = Warehouse::withCount('stocks')->where('is_active', true)->get();
-        $cashRegisters = CashRegister::with('currentSession.user')->where('is_active', true)->get();
-        $currentCashSession = $user->isVendedor() ? $user->currentCashSession : null;
+        $cashRegisters = CashRegister::with(['currentSession.user', 'warehouse'])->where('is_active', true)->get();
+        $currentCashSession = $user->isVendedor() ? $user->currentCashSession()->with(['cashRegister.warehouse', 'user'])->first() : null;
         $companySettings = CompanySetting::current();
 
         // Estadísticas financieras y de almacén
@@ -145,6 +145,25 @@ class InbotWebController extends Controller
         $totalCompras         = (float) Compra::sum('total');
         $valorInventarioCosto = (float) Producto::sum(DB::raw('stock_actual * precio_compra'));
         $valorInventarioVenta = (float) Producto::sum(DB::raw('stock_actual * precio_venta'));
+
+        // 4. Métricas analíticas para gráficos interactivos
+        $salesLast7Days = Venta::selectRaw("DATE(fecha) as dia, SUM(total) as total, COUNT(*) as transacciones")
+            ->where('fecha', '>=', now()->subDays(6)->startOfDay())
+            ->groupBy(DB::raw("DATE(fecha)"))
+            ->orderBy('dia')
+            ->get();
+
+        $stockByCategory = Category::withSum('productos', 'stock_actual')
+            ->get()
+            ->filter(fn ($c) => (int) ($c->productos_sum_stock_actual ?? 0) > 0)
+            ->values();
+
+        $topProductos = DetalleVenta::selectRaw('producto_id, SUM(cantidad) as total_vendido, SUM(subtotal) as total_monto')
+            ->groupBy('producto_id')
+            ->orderByDesc('total_vendido')
+            ->take(5)
+            ->with('producto')
+            ->get();
 
         return view('dashboard.dashboard', compact(
             'productos',
@@ -168,7 +187,10 @@ class InbotWebController extends Controller
             'totalFacturado',
             'totalCompras',
             'valorInventarioCosto',
-            'valorInventarioVenta'
+            'valorInventarioVenta',
+            'salesLast7Days',
+            'stockByCategory',
+            'topProductos'
         ));
     }
 
@@ -189,9 +211,9 @@ class InbotWebController extends Controller
     }
 
     /**
-     * Vista dedicada de Ventas (/ventas-lista/)
+     * Vista dedicada de Ventas y Punto de Venta POS (/ventas-lista/)
      */
-    public function ventasLista(): View
+    public function ventasLista(Request $request): View
     {
         $ventas = Venta::with(['usuario', 'detalles.producto'])
             ->latest('fecha')
@@ -208,7 +230,25 @@ class InbotWebController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        return view('dashboard.ventas', compact('ventas', 'ventasHoy', 'productos'));
+        $user = $request->user();
+        $cashRegisters = CashRegister::with('warehouse')->where('is_active', true)->get();
+        $currentSession = $user->currentCashSession()
+            ? $user->currentCashSession()->with(['cashRegister.warehouse', 'user', 'movements'])->first()
+            : null;
+        $ventasTurno = $currentSession
+            ? $currentSession->ventas()->with(['usuario', 'detalles.producto'])->latest('fecha')->get()
+            : collect();
+        $totalTurno = $ventasTurno->sum('total');
+
+        return view('dashboard.ventas', compact(
+            'ventas',
+            'ventasHoy',
+            'productos',
+            'cashRegisters',
+            'currentSession',
+            'ventasTurno',
+            'totalTurno'
+        ));
     }
 
     /**
@@ -611,10 +651,13 @@ class InbotWebController extends Controller
                 }
 
                 $numeroFactura = 'FAC-' . strtoupper(Str::random(8));
+                $activeSession = $request->user()->currentCashSession;
 
                 $venta = Venta::create([
                     'numero_factura'    => $numeroFactura,
                     'user_id'           => $request->user()->id,
+                    'cash_session_id'   => $activeSession?->id,
+                    'warehouse_id'      => $activeSession?->cashRegister?->warehouse_id,
                     'metodo_pago'       => $validated['metodo_pago'],
                     'total'             => $totalVenta,
                     'fecha'             => now(),

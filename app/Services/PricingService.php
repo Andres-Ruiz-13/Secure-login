@@ -24,4 +24,15 @@ class PricingService
             default => round($baseSalePrice, 2),
         };
     }
+
+    /**
+     * Formatea un valor numérico a formato oficial de Peso Colombiano (COP).
+     * Ejemplo: 114750 => "$ 114.750" (Separador de miles con punto, sin centavos)
+     */
+    public static function formatCop(float|int|string|null $amount, bool $withSymbol = true): string
+    {
+        $val = (float) ($amount ?? 0);
+        $formatted = number_format($val, 0, ',', '.');
+        return $withSymbol ? '$ ' . $formatted : $formatted;
+    }
 }

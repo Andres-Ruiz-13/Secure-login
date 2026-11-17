@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CompanySettingController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NewsController;
 use App\Http\Controllers\Admin\UserController;
@@ -7,6 +8,9 @@ use App\Http\Controllers\Admin\WarehouseController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\InbotWebController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Pos\CashSessionController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -54,8 +58,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/cms/categorias', [InbotWebController::class, 'storeCategoria'])->name('cms.categorias.store');
     Route::delete('/cms/categorias/{categoria}', [InbotWebController::class, 'destroyCategoria'])->name('cms.categorias.destroy');
 
-    // Descarga de Reportes en Word (.docx)
+    // Descarga de Reportes en Word (.docx) y Exportación CSV/Excel
     Route::get('/reportes/word', [InbotWebController::class, 'descargarReporteWord'])->name('reportes.word');
+    Route::get('/reportes/exportar/csv', [ReportController::class, 'exportCsv'])->name('reportes.csv');
 
     // Módulo FASE 4: Bodegas, Transferencias (6 estados), Ajustes y Kardex
     Route::middleware('role:admin,bodeguero')->group(function () {
@@ -73,11 +78,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/inventario/ajustes/{adjustment}/rechazar', [WarehouseController::class, 'rejectAdjustment'])->name('inventory.adjustments.reject')->middleware('role:admin');
     });
 
-    // Gestión de Usuarios y Roles (Exclusivo Administrador)
+    // Módulo FASE 5: Sesiones de Caja (Apertura, Cierre con Arqueo, Movimientos)
+    Route::middleware('role:admin,vendedor')->group(function () {
+        Route::post('/caja/apertura', [CashSessionController::class, 'open'])->name('cash.session.open');
+        Route::post('/caja/{session}/cierre', [CashSessionController::class, 'close'])->name('cash.session.close');
+        Route::post('/caja/{session}/movimiento', [CashSessionController::class, 'movement'])->name('cash.session.movement');
+    });
+
+    // Gestión de Usuarios y Configuración (Exclusivo Administrador)
     Route::middleware('role:admin')->group(function () {
         Route::post('/admin/users', [UserController::class, 'store'])->name('admin.users.store');
         Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
         Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+        Route::put('/admin/company-settings', [CompanySettingController::class, 'update'])->name('admin.settings.update');
     });
 
     // Mantenimiento de Multimedia y Noticias
@@ -89,6 +102,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/news', [NewsController::class, 'store'])->name('admin.news.store');
     Route::put('/admin/news/{news}', [NewsController::class, 'update'])->name('admin.news.update');
     Route::delete('/admin/news/{news}', [NewsController::class, 'destroy'])->name('admin.news.destroy');
+    Route::post('/admin/news/{news}/read', [NewsController::class, 'markAsRead'])->name('admin.news.read');
+
+    // Notificaciones del Sistema
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
 
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 });

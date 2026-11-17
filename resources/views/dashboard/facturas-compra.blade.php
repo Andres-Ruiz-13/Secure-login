@@ -199,12 +199,12 @@
                                 <td class="mono small">{{ $c->proveedor->nit ?? 'N/A' }}</td>
                                 <td class="small text-muted">{{ $c->fecha ? $c->fecha->format('d/m/Y H:i') : $c->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="small">{{ $c->usuario->name ?? 'Bodeguero' }}</td>
-                                <td class="mono fw-bold fs-6 text-dark">${{ number_format($c->total, 2) }}</td>
+                                <td class="mono fw-bold fs-6 text-dark">$ {{ number_format($c->total, 0, ',', '.') }}</td>
                                 <td>
                                     <div class="d-flex flex-wrap gap-1">
                                         @foreach($c->detalles as $det)
                                             <span class="badge bg-light text-dark border">
-                                                {{ $det->producto->nombre ?? 'Producto' }} (x{{ $det->cantidad }} uds a ${{ number_format($det->precio_unitario, 2) }})
+                                                {{ $det->producto->nombre ?? 'Producto' }} (x{{ $det->cantidad }} uds a $ {{ number_format($det->precio_unitario, 0, ',', '.') }})
                                             </span>
                                         @endforeach
                                     </div>
@@ -336,12 +336,12 @@
                     const cant = parseFloat(inputCant.value) || 0;
                     const precio = parseFloat(inputPrecio.value) || 0;
                     const sub = cant * precio;
-                    tdSub.textContent = '$' + sub.toFixed(2);
+                    tdSub.textContent = '$ ' + Math.round(sub).toLocaleString('es-CO');
                     total += sub;
                 }
             });
 
-            document.getElementById('lblTotalCompra').textContent = '$' + total.toFixed(2);
+            document.getElementById('lblTotalCompra').textContent = '$ ' + Math.round(total).toLocaleString('es-CO');
         }
 
         document.addEventListener('DOMContentLoaded', () => {

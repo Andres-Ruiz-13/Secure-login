@@ -154,7 +154,7 @@
                     @if(auth()->user()->isAdmin())
                     <div class="modal fade" id="modalEditarBodega{{ $w->id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog">
-                            <div class="modal-content card-cms shadow border-0">
+                            <div class="modal-content shadow border-0">
                                 <form action="{{ route('bodegas.update', $w->id) }}" method="POST">
                                     @csrf
                                     @method('PUT')
@@ -454,7 +454,7 @@
     @if(auth()->user()->isAdmin())
     <div class="modal fade" id="modalNuevaBodega" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content card-cms shadow border-0">
+            <div class="modal-content shadow border-0">
                 <form action="{{ route('bodegas.store') }}" method="POST">
                     @csrf
                     <div class="modal-header border-bottom">
@@ -501,7 +501,7 @@
     <!-- Modal: Nueva Transferencia entre Bodegas -->
     <div class="modal fade" id="modalNuevaTransferencia" tabindex="-1">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content card-cms shadow border-0">
+            <div class="modal-content shadow border-0">
                 <form action="{{ route('inventory.transfers.store') }}" method="POST">
                     @csrf
                     <div class="modal-header border-bottom">
@@ -562,7 +562,7 @@
     <!-- Modal: Solicitar Ajuste Físico de Inventario -->
     <div class="modal fade" id="modalNuevoAjuste" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content card-cms shadow border-0">
+            <div class="modal-content shadow border-0">
                 <form action="{{ route('inventory.adjustments.store') }}" method="POST">
                     @csrf
                     <div class="modal-header border-bottom">
@@ -608,3 +608,4 @@
     </div>
 
 @endsection
+

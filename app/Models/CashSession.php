@@ -56,6 +56,16 @@ class CashSession extends Model
         return $this->hasMany(CashMovement::class, 'cash_session_id');
     }
 
+    public function getSaldoFinalRealAttribute(): ?float
+    {
+        return $this->saldo_final_contado;
+    }
+
+    public function getAperturaAtAttribute(): ?\Illuminate\Support\Carbon
+    {
+        return $this->opened_at;
+    }
+
     public function scopeAbierta($query)
     {
         return $query->where('estado', 'abierta');

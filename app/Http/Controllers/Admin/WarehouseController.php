@@ -429,3 +429,4 @@ class WarehouseController extends Controller
         return redirect()->route('bodegas.index')->with('success', 'Ajuste ' . $adjustment->codigo . ' rechazado.');
     }
 }
+

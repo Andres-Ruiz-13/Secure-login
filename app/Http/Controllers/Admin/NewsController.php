@@ -142,4 +142,24 @@ class NewsController extends Controller
             ->route('dashboard')
             ->with('success', 'Noticia eliminada correctamente.');
     }
+
+    /**
+     * Marcar comunicado o noticia como leída por el usuario autenticado
+     */
+    public function markAsRead(Request $request, News $news): \Illuminate\Http\JsonResponse|RedirectResponse
+    {
+        $user = $request->user();
+        \App\Models\NewsRead::firstOrCreate([
+            'news_id' => $news->id,
+            'user_id' => $user->id,
+        ], [
+            'read_at' => now(),
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->with('success', 'Comunicado marcado como leído.');
+    }
 }

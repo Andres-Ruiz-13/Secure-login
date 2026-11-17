@@ -100,7 +100,7 @@
                 <!-- Modal Ver Noticia -->
                 <div class="modal fade" id="modalVerNoticia{{ $n->id }}" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content card-cms border-0 shadow">
+                        <div class="modal-content border-0 shadow">
                             <div class="modal-header border-bottom">
                                 <div>
                                     <span class="badge {{ $priorityClass }} text-uppercase mb-1">{{ $n->priority }}</span>
@@ -117,7 +117,22 @@
                                     {!! nl2br(e($n->content)) !!}
                                 </div>
                             </div>
-                            <div class="modal-footer border-top bg-light">
+                            <div class="modal-footer border-top bg-light d-flex justify-content-between align-items-center">
+                                @php
+                                    $yaLeido = \App\Models\NewsRead::where('news_id', $n->id)->where('user_id', auth()->id())->exists();
+                                @endphp
+                                @if($yaLeido)
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle py-2 px-3 small">
+                                        <i class="bi bi-check-circle-fill me-1"></i> Comunicado Leído
+                                    </span>
+                                @else
+                                    <form action="{{ route('admin.news.read', $n->id) }}" method="POST" class="m-0">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-success btn-sm fw-semibold">
+                                            <i class="bi bi-check2-circle me-1"></i> Marcar como Leído
+                                        </button>
+                                    </form>
+                                @endif
                                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
                             </div>
                         </div>
@@ -151,37 +166,108 @@
         </div>
 
         <div class="row g-3">
-            @foreach($productos->take(4) as $p)
-                <div class="col-sm-6 col-xl-3">
-                    <div class="card card-cms h-100 shadow-sm border p-3">
-                        <div class="d-flex align-items-center gap-3 mb-2">
+            @foreach($productos->take(8) as $p)
+                <div class="col-sm-6 col-md-4 col-xl-3">
+                    <div class="card card-cms h-100 shadow-sm border overflow-hidden">
+                        <div class="bg-light d-flex align-items-center justify-content-center position-relative" style="height: 140px; border-bottom: 1px solid var(--admin-card-border, #e2e8f0);">
                             @if($p->image_url)
-                                <img src="{{ $p->image_url }}" alt="{{ $p->nombre }}" class="rounded-3 border object-fit-cover" style="width: 52px; height: 52px;">
+                                <img src="{{ $p->image_url }}" alt="{{ $p->nombre }}" class="object-fit-contain p-2" style="max-height: 100%; max-width: 100%;">
                             @else
-                                <div class="rounded-3 bg-secondary-subtle d-flex align-items-center justify-content-center text-muted" style="width: 52px; height: 52px;">
-                                    <i class="bi bi-box-seam fs-4"></i>
+                                <div class="text-center text-muted p-2">
+                                    <i class="bi bi-box-seam fs-1 text-secondary opacity-50"></i>
+                                    <div class="small text-muted" style="font-size: 0.72rem;">Sin imagen</div>
                                 </div>
                             @endif
-                            <div class="overflow-hidden">
-                                <div class="fw-bold text-body small text-truncate" title="{{ $p->nombre }}">{{ $p->nombre }}</div>
-                                <span class="badge bg-light text-dark border mono" style="font-size: 0.7rem;">{{ $p->codigo_barras }}</span>
-                            </div>
+                            <span class="position-absolute top-0 end-0 m-2 badge {{ $p->stock_actual <= $p->stock_minimo ? 'bg-danger' : 'bg-success' }}" style="font-size: 0.68rem;">
+                                {{ $p->stock_actual <= $p->stock_minimo ? 'Stock Bajo' : 'En Stock' }}
+                            </span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                            <div>
-                                <small class="text-muted d-block" style="font-size: 0.72rem;">Precio Venta</small>
-                                <span class="mono fw-bold text-success fs-6">${{ number_format($p->precio_venta, 2) }}</span>
-                            </div>
-                            <div class="text-end">
-                                <small class="text-muted d-block" style="font-size: 0.72rem;">Disponible</small>
-                                <span class="badge {{ $p->stock_actual <= $p->stock_minimo ? 'bg-danger text-white' : 'bg-primary-subtle text-primary-emphasis' }} mono">
-                                    {{ $p->stock_actual }} uds
+                        <div class="p-3 d-flex flex-column flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1 gap-1">
+                                <span class="badge bg-light text-secondary border small text-truncate" style="max-width: 60%;" title="{{ $p->categoria->name ?? 'General' }}">
+                                    {{ $p->categoria->name ?? 'General' }}
                                 </span>
+                                <span class="mono text-muted small flex-shrink-0" style="font-size: 0.7rem;">
+                                    <i class="bi bi-upc"></i> {{ $p->codigo_barras }}
+                                </span>
+                            </div>
+                            <div class="fw-bold text-body small text-truncate mb-2" title="{{ $p->nombre }}">{{ $p->nombre }}</div>
+                            <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-end">
+                                <div>
+                                    <small class="text-muted d-block" style="font-size: 0.68rem; letter-spacing: 0.04em;">PRECIO VENTA</small>
+                                    <span class="mono fw-bold text-success fs-6">$ {{ number_format($p->precio_venta, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="text-end flex-shrink-0">
+                                    <small class="text-muted d-block" style="font-size: 0.68rem; letter-spacing: 0.04em;">DISPONIBLE</small>
+                                    <span class="badge {{ $p->stock_actual <= $p->stock_minimo ? 'bg-danger text-white' : 'bg-primary-subtle text-primary-emphasis' }} mono">
+                                        {{ $p->stock_actual }} uds
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             @endforeach
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SECCIÓN 3: ANALÍTICA GRÁFICA Y EXPORTACIONES EMPRESARIALES -->
+    <!-- ======================================================== -->
+    <div class="card card-cms shadow-sm border mb-4 p-3 p-md-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3 border-bottom pb-3">
+            <div>
+                <h5 class="fw-bold mb-0 text-body">
+                    <i class="bi bi-graph-up-arrow text-primary me-2"></i> Inteligencia y Analítica de Negocio
+                </h5>
+                <span class="text-muted small">Tendencias transaccionales, existencias por categoría y exportación de datos.</span>
+            </div>
+            <!-- Toolbar de Exportación -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="small text-muted fw-bold d-none d-md-inline">Exportar:</span>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Excel / CSV
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li><a class="dropdown-item small" href="{{ route('reportes.csv', ['tipo' => 'inventario']) }}"><i class="bi bi-box-seam text-primary me-2"></i> Catálogo e Inventario</a></li>
+                        <li><a class="dropdown-item small" href="{{ route('reportes.csv', ['tipo' => 'ventas']) }}"><i class="bi bi-receipt text-success me-2"></i> Historial de Ventas</a></li>
+                        <li><a class="dropdown-item small" href="{{ route('reportes.csv', ['tipo' => 'kardex']) }}"><i class="bi bi-arrow-left-right text-info me-2"></i> Kardex de Movimientos</a></li>
+                        <li><a class="dropdown-item small" href="{{ route('reportes.csv', ['tipo' => 'caja']) }}"><i class="bi bi-cash-coin text-warning me-2"></i> Turnos de Caja y Arqueo</a></li>
+                    </ul>
+                </div>
+                <a href="{{ route('reportes.word', ['tipo' => 'inventario']) }}" class="btn btn-outline-primary btn-sm" title="Descargar Informe Oficial en Word (.docx)">
+                    <i class="bi bi-file-earmark-word me-1"></i> Informe Word
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Gráfico 1: Ventas últimos 7 días -->
+            <div class="col-lg-7">
+                <div class="p-3 bg-light rounded-3 border h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-bold small text-dark"><i class="bi bi-cash-stack text-success me-1"></i> Tendencia de Ventas (Últimos 7 Días)</span>
+                        <span class="badge bg-white text-secondary border small mono">Semana Actual</span>
+                    </div>
+                    <div style="height: 220px; position: relative;">
+                        <canvas id="chartSalesTrend"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico 2: Existencias por Categoría -->
+            <div class="col-lg-5">
+                <div class="p-3 bg-light rounded-3 border h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-bold small text-dark"><i class="bi bi-pie-chart text-primary me-1"></i> Stock por Categoría</span>
+                        <span class="badge bg-white text-secondary border small mono">{{ $stockByCategory->count() }} categorías</span>
+                    </div>
+                    <div style="height: 220px; position: relative;" class="d-flex align-items-center justify-content-center">
+                        <canvas id="chartStockCategory"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -217,7 +303,7 @@
                         <i class="bi bi-cash-stack"></i>
                     </div>
                     <div>
-                        <div class="fs-4 fw-bold text-dark mono">${{ number_format($totalFacturado, 2) }}</div>
+                        <div class="fs-4 fw-bold text-dark mono">$ {{ number_format($totalFacturado, 0, ',', '.') }}</div>
                         <div class="text-muted small fw-medium">Facturado en Ventas ({{ $ventas->count() }})</div>
                     </div>
                 </div>
@@ -268,6 +354,11 @@
                     <li class="nav-item">
                         <button class="nav-link" id="tab-usuarios" data-bs-toggle="pill" data-bs-target="#pane-usuarios" type="button">
                             <i class="bi bi-people me-1"></i> Usuarios & Roles
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tab-configuracion" data-bs-toggle="pill" data-bs-target="#pane-configuracion" type="button">
+                            <i class="bi bi-sliders me-1"></i> Configuración Empresa
                         </button>
                     </li>
                 @endif
@@ -351,9 +442,9 @@
                                     <td class="fw-bold">{{ $p->nombre }}</td>
                                     <td><span class="badge bg-light text-dark border">{{ $p->categoria->name ?? 'N/A' }}</span></td>
                                     <td class="small">{{ $p->proveedor->nombre ?? 'N/A' }}</td>
-                                    <td class="mono text-muted">${{ number_format($p->precio_compra, 2) }}</td>
+                                    <td class="mono text-muted">$ {{ number_format($p->precio_compra, 0, ',', '.') }}</td>
                                     <td class="mono text-muted">{{ number_format($p->porcentaje_ganancia, 1) }}%</td>
-                                    <td class="mono fw-bold text-primary">${{ number_format($p->precio_venta, 2) }}</td>
+                                    <td class="mono fw-bold text-primary">$ {{ number_format($p->precio_venta, 0, ',', '.') }}</td>
                                     <td class="fw-bold {{ $esBajo ? 'text-danger' : 'text-dark' }}">
                                         {{ $p->stock_actual }}
                                     </td>
@@ -447,7 +538,7 @@
                                 <tr>
                                     <td class="mono fw-bold text-primary">{{ $c->numero_factura }}</td>
                                     <td class="fw-medium">{{ $c->proveedor->nombre ?? 'N/A' }}</td>
-                                    <td class="mono fw-bold">${{ number_format($c->total, 2) }}</td>
+                                    <td class="mono fw-bold text-dark">$ {{ number_format($c->total, 0, ',', '.') }}</td>
                                     <td class="small text-muted">{{ $c->fecha ? $c->fecha->format('d/m/Y H:i') : $c->created_at->format('d/m/Y H:i') }}</td>
                                     <td class="small">{{ $c->usuario->name ?? 'Sistema' }}</td>
                                     <td>
@@ -509,7 +600,7 @@
                                     <td class="mono fw-bold text-success">{{ $v->numero_factura }}</td>
                                     <td class="fw-medium">{{ $v->cliente_nombre ?? 'Cliente General' }}</td>
                                     <td><span class="badge bg-info-subtle text-info text-uppercase">{{ $v->metodo_pago }}</span></td>
-                                    <td class="mono fw-bold text-dark">${{ number_format($v->total, 2) }}</td>
+                                    <td class="mono fw-bold text-dark">$ {{ number_format($v->total, 0, ',', '.') }}</td>
                                     <td class="small text-muted">{{ $v->fecha ? $v->fecha->format('d/m/Y H:i') : $v->created_at->format('d/m/Y H:i') }}</td>
                                     <td class="small">{{ $v->usuario->name ?? 'Vendedor' }}</td>
                                     <td>
@@ -712,12 +803,12 @@
 
                             <div class="p-3 bg-light rounded-3 mb-3">
                                 <div class="small text-muted">VALOR TOTAL A PRECIO DE COSTO (COMPRA)</div>
-                                <div class="fs-4 fw-bold text-dark mono">${{ number_format($valorInventarioCosto, 2) }}</div>
+                                <div class="fs-4 fw-bold text-dark mono">$ {{ number_format($valorInventarioCosto, 0, ',', '.') }} COP</div>
                             </div>
 
                             <div class="p-3 bg-primary-subtle text-primary rounded-3">
                                 <div class="small text-primary-emphasis">VALOR TOTAL A PRECIO DE VENTA COMERCIAL</div>
-                                <div class="fs-3 fw-bold mono">${{ number_format($valorInventarioVenta, 2) }}</div>
+                                <div class="fs-3 fw-bold mono text-dark">$ {{ number_format($valorInventarioVenta, 0, ',', '.') }} COP</div>
                             </div>
                         </div>
                     </div>
@@ -901,6 +992,100 @@
                 </div>
             </div>
 
+            @if(auth()->user()->isAdmin())
+            <!-- ======================================================== -->
+            <!-- 10. PESTAÑA: CONFIGURACIÓN EMPRESARIAL                   -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade" id="pane-configuracion" role="tabpanel">
+                <div class="card card-cms shadow-sm border p-4">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                        <div>
+                            <h5 class="fw-bold text-body mb-0">
+                                <i class="bi bi-sliders text-primary me-2"></i> Configuración Corporativa y Parámetros del Sistema
+                            </h5>
+                            <span class="text-muted small">Administra los datos fiscales, moneda, impuestos y parámetros operativos sin modificar código fuente.</span>
+                        </div>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fw-semibold">
+                            Exclusivo Administrador
+                        </span>
+                    </div>
+
+                    <form action="{{ route('admin.settings.update') }}" method="POST">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Nombre Comercial</label>
+                                <input type="text" name="nombre_comercial" class="form-control" value="{{ $companySettings->nombre_comercial }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Razón Social</label>
+                                <input type="text" name="razon_social" class="form-control" value="{{ $companySettings->razon_social }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">NIT / Identificación Tributaria</label>
+                                <input type="text" name="nit" class="form-control mono" value="{{ $companySettings->nit }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Teléfono de Contacto</label>
+                                <input type="text" name="telefono" class="form-control" value="{{ $companySettings->telefono }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Correo Electrónico Oficial</label>
+                                <input type="email" name="correo" class="form-control" value="{{ $companySettings->correo }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Dirección Principal</label>
+                                <input type="text" name="direccion" class="form-control" value="{{ $companySettings->direccion }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Ciudad</label>
+                                <input type="text" name="ciudad" class="form-control" value="{{ $companySettings->ciudad }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">País</label>
+                                <input type="text" name="pais" class="form-control" value="{{ $companySettings->pais }}">
+                            </div>
+
+                            <div class="col-12"><hr class="my-2"></div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Símbolo Moneda</label>
+                                <input type="text" name="moneda_simbolo" class="form-control mono" value="{{ $companySettings->moneda_simbolo }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Código Moneda (ISO)</label>
+                                <input type="text" name="moneda_codigo" class="form-control mono text-uppercase" value="{{ $companySettings->moneda_codigo }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Nombre Impuesto</label>
+                                <input type="text" name="impuesto_nombre" class="form-control" value="{{ $companySettings->impuesto_nombre }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">% Impuesto</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.01" min="0" max="100" name="impuesto_porcentaje" class="form-control mono" value="{{ $companySettings->impuesto_porcentaje }}" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Stock Mínimo por Defecto (Nuevos Productos)</label>
+                                <input type="number" min="1" name="stock_minimo_defecto" class="form-control mono" value="{{ $companySettings->stock_minimo_defecto }}" required>
+                                <small class="text-muted">Umbral para alertas automáticas cuando no se especifique uno individual.</small>
+                            </div>
+
+                            <div class="col-12 text-end pt-3">
+                                <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">
+                                    <i class="bi bi-save me-1"></i> Guardar Cambios de Configuración
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @endif
+
         </div>
     <!-- ======================================================== -->
     <!-- MODALES DE OPERACIÓN                                     -->
@@ -910,7 +1095,7 @@
     @if(auth()->user()->isAdmin())
     <div class="modal fade" id="modalNuevaNoticia" tabindex="-1">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content rounded-4 border-0 card-cms shadow">
+            <div class="modal-content rounded-4 border-0 shadow">
                 <form action="{{ route('admin.news.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-header border-bottom">
@@ -1269,7 +1454,7 @@
                             <select name="producto_id" class="form-select" required>
                                 <option value="">Seleccione producto...</option>
                                 @foreach($productos as $prod)
-                                    <option value="{{ $prod->id }}">{{ $prod->nombre }} — ${{ number_format($prod->precio_venta, 2) }} (Disponible: {{ $prod->stock_actual }})</option>
+                                    <option value="{{ $prod->id }}">{{ $prod->nombre }} — $ {{ number_format($prod->precio_venta, 0, ',', '.') }} (Disponible: {{ $prod->stock_actual }})</option>
                                 @endforeach
                             </select>
                         </div>
@@ -1447,7 +1632,7 @@
             const compra = parseFloat(document.getElementById('edit_precio_compra').value) || 0;
             const ganancia = parseFloat(document.getElementById('edit_porcentaje_ganancia').value) || 0;
             const venta = compra * (1 + (ganancia / 100));
-            document.getElementById('edit_precio_venta_preview').value = venta.toFixed(2);
+            document.getElementById('edit_precio_venta_preview').value = Math.round(venta);
         }
 
         function cargarModalEditar(btn) {
@@ -1459,9 +1644,9 @@
             document.getElementById('edit_descripcion').value = btn.getAttribute('data-descripcion') || '';
             document.getElementById('edit_categoria_id').value = btn.getAttribute('data-categoria') || '';
             document.getElementById('edit_proveedor_id').value = btn.getAttribute('data-proveedor') || '';
-            document.getElementById('edit_precio_compra').value = btn.getAttribute('data-compra') || 0;
+            document.getElementById('edit_precio_compra').value = Math.round(btn.getAttribute('data-compra') || 0);
             document.getElementById('edit_porcentaje_ganancia').value = btn.getAttribute('data-ganancia') || 0;
-            document.getElementById('edit_precio_venta_preview').value = Number(btn.getAttribute('data-venta') || 0).toFixed(2);
+            document.getElementById('edit_precio_venta_preview').value = Math.round(Number(btn.getAttribute('data-venta') || 0));
             document.getElementById('edit_stock_actual').value = btn.getAttribute('data-stock') || 0;
             document.getElementById('edit_stock_minimo').value = btn.getAttribute('data-minimo') || 0;
             document.getElementById('edit_is_active').checked = btn.getAttribute('data-active') === '1';
@@ -1540,7 +1725,7 @@
                 if (data.encontrado) {
                     const p = data.producto;
                     nameEl.textContent = p.nombre;
-                    detEl.innerHTML = `Precio Venta: <b>$${Number(p.precio_venta).toFixed(2)}</b> | Stock actual: <b>${p.stock_actual} uds</b> | Cód: <code>${p.codigo_barras}</code>`;
+                    detEl.innerHTML = `Precio Venta: <b>$ ${Math.round(Number(p.precio_venta)).toLocaleString('es-CO')}</b> | Stock actual: <b>${p.stock_actual} uds</b> | Cód: <code>${p.codigo_barras}</code>`;
                     resDiv.classList.remove('d-none', 'alert-danger');
                     resDiv.classList.add('alert-success');
                 } else {
@@ -1555,5 +1740,80 @@
                 resDiv.classList.remove('d-none');
             }
         }
+
+        // Inicialización de Gráficos Chart.js
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Chart === 'undefined') return;
+
+            const salesData = @json($salesLast7Days ?? []);
+            const catData = @json($stockByCategory ?? []);
+
+            // 1. Gráfico de Tendencia de Ventas
+            const ctxSales = document.getElementById('chartSalesTrend');
+            if (ctxSales) {
+                const labels = salesData.length > 0 ? salesData.map(d => d.dia) : ['Hoy'];
+                const values = salesData.length > 0 ? salesData.map(d => parseFloat(d.total)) : [0];
+
+                new Chart(ctxSales, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Ventas ($)',
+                            data: values,
+                            borderColor: '#059669',
+                            backgroundColor: 'rgba(5, 150, 105, 0.12)',
+                            tension: 0.35,
+                            fill: true,
+                            pointBackgroundColor: '#059669',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(val) { return '$ ' + Math.round(val).toLocaleString('es-CO'); }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Gráfico de Existencias por Categoría
+            const ctxCat = document.getElementById('chartStockCategory');
+            if (ctxCat && catData && catData.length > 0) {
+                new Chart(ctxCat, {
+                    type: 'doughnut',
+                    data: {
+                        labels: catData.map(c => c.name),
+                        datasets: [{
+                            data: catData.map(c => parseInt(c.productos_sum_stock_actual || 0)),
+                            backgroundColor: [
+                                '#0284c7', '#059669', '#d97706', '#dc2626', '#7c3aed', '#ec4899', '#64748b'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { boxWidth: 12, font: { size: 10 } }
+                            }
+                        }
+                    }
+                });
+            }
+        });
     </script>
 @endpush

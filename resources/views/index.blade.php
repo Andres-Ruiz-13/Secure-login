@@ -388,7 +388,7 @@
                     <p class="text-muted mb-0">Precios calculados con margen de ganancia comercial y validación inmediata de existencias.</p>
                 </div>
                 <div>
-                    <input type="text" id="liveSearchInput" class="form-control form-control-sm" placeholder="🔍 Filtrar por nombre o código..." style="min-width: 260px;" onkeyup="filterProducts()">
+                    <input type="text" id="liveSearchInput" class="form-control form-control-sm" placeholder="🔍 Filtrar por nombre o código..." style="min-width: 260px;">
                 </div>
             </div>
 
@@ -411,7 +411,11 @@
                                         $imgUrl = $prod->image_url;
                                     @endphp
                                     @if($imgUrl)
-                                        <img src="{{ $imgUrl }}" alt="{{ $prod->nombre }}" class="product-img" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'text-center text-muted p-4\'><i class=\'bi bi-box-seam display-5 text-secondary opacity-50\'></i><div class=\'small mt-2 text-muted fw-semibold\'>Imagen no disponible</div></div>';">
+                                        <img src="{{ $imgUrl }}" alt="{{ $prod->nombre }}" class="product-img" loading="lazy">
+                                        <div class="product-fallback-img d-none text-center text-muted p-4">
+                                            <i class="bi bi-box-seam display-5 text-secondary opacity-50"></i>
+                                            <div class="small mt-2 text-muted fw-semibold">Imagen no disponible</div>
+                                        </div>
                                     @else
                                         <div class="text-center text-muted p-4">
                                             <i class="bi bi-box-seam display-5 text-secondary opacity-50"></i>
@@ -452,7 +456,7 @@
                                         <div>
                                             <div class="text-muted fw-bold" style="font-size: 0.68rem; letter-spacing: 0.04em;">PRECIO VENTA</div>
                                             <div class="fs-5 fw-bold text-primary mono text-nowrap">
-                                                ${{ number_format($prod->precio_venta, 2) }}
+                                                $ {{ number_format($prod->precio_venta, 0, ',', '.') }}
                                             </div>
                                         </div>
                                         <div class="text-end flex-shrink-0">
@@ -715,6 +719,23 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script nonce="{{ $cspNonce ?? '' }}">
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('liveSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', filterProducts);
+            }
+
+            document.querySelectorAll('.product-img').forEach(img => {
+                img.addEventListener('error', () => {
+                    img.style.display = 'none';
+                    const fallback = img.nextElementSibling;
+                    if (fallback && fallback.classList.contains('product-fallback-img')) {
+                        fallback.classList.remove('d-none');
+                    }
+                });
+            });
+        });
+
         function filterProducts() {
             const query = document.getElementById('liveSearchInput').value.toLowerCase().trim();
             const items = document.querySelectorAll('.product-item');

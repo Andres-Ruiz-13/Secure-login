@@ -188,3 +188,4 @@ class WarehouseAndKardexTest extends TestCase
         $resCajero->assertStatus(403);
     }
 }
+

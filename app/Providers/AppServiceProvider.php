@@ -29,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
 
         \Illuminate\Database\Eloquent\Model::preventLazyLoading(! $this->app->isProduction());
 
+        \Illuminate\Support\Facades\Blade::directive('cop', function ($expression) {
+            return "<?php echo \App\Services\PricingService::formatCop($expression); ?>";
+        });
+
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($request->input('email', '').'|'.$request->ip());
         });
