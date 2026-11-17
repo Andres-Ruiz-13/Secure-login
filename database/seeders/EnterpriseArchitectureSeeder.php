@@ -172,3 +172,4 @@ class EnterpriseArchitectureSeeder extends Seeder
         );
     }
 }
+

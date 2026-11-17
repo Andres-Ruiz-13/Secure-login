@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\CashRegister;
+use App\Models\CashSession;
+use App\Models\CompanySetting;
 use App\Models\Compra;
 use App\Models\DetalleCompra;
 use App\Models\DetalleVenta;
@@ -10,8 +13,10 @@ use App\Models\Media;
 use App\Models\News;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use App\Models\SystemNotification;
 use App\Models\User;
 use App\Models\Venta;
+use App\Models\Warehouse;
 use App\Services\AuditService;
 use App\Services\DebugLogService;
 use App\Services\ImageHashService;
@@ -101,9 +106,35 @@ class InbotWebController extends Controller
         $categorias  = Category::where('is_active', true)->orderBy('name')->get();
         $users       = $request->user()->isAdmin() ? User::latest('id')->get() : collect();
 
-        // Multimedia y noticias para retrocompatibilidad
+        // Multimedia y noticias para retrocompatibilidad y CMS enriquecido
         $media = Media::with('producto')->latest()->get();
         $news  = News::with('media')->latest()->get();
+
+        $user = $request->user();
+
+        // 1. Noticias / Comunicados CMS priorizados por rol y destacados
+        $pinnedNews = News::with(['media', 'author'])
+            ->where('published', true)
+            ->where(function ($q) use ($user) {
+                $q->where('target_role', 'todos')
+                  ->orWhere('target_role', $user->role);
+            })
+            ->orderByDesc('pinned')
+            ->orderByDesc('created_at')
+            ->take(6)
+            ->get();
+
+        // 2. Alertas y notificaciones del sistema
+        $notifications = SystemNotification::paraRol($user->role)
+            ->latest()
+            ->take(6)
+            ->get();
+
+        // 3. Bodegas y Cajas físicas
+        $warehouses = Warehouse::withCount('stocks')->where('is_active', true)->get();
+        $cashRegisters = CashRegister::with('currentSession.user')->where('is_active', true)->get();
+        $currentCashSession = $user->isVendedor() ? $user->currentCashSession : null;
+        $companySettings = CompanySetting::current();
 
         // Estadísticas financieras y de almacén
         $totalProductos       = Producto::count();
@@ -124,6 +155,12 @@ class InbotWebController extends Controller
             'users',
             'media',
             'news',
+            'pinnedNews',
+            'notifications',
+            'warehouses',
+            'cashRegisters',
+            'currentCashSession',
+            'companySettings',
             'totalProductos',
             'stockBajoCount',
             'totalFacturado',

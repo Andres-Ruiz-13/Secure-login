@@ -162,3 +162,4 @@ class EnterpriseArchitectureTest extends TestCase
         $this->assertSame('COP', $settings->moneda_codigo);
     }
 }
+

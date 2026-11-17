@@ -53,3 +53,4 @@ class InventoryAdjustment extends Model
         return $this->belongsTo(User::class, 'autorizado_por');
     }
 }
+

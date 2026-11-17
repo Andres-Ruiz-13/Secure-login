@@ -1,208 +1,195 @@
-<!DOCTYPE html>
-<html lang="es" data-bs-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Panel de Control CMS | INBOT SYSTEM</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
-    
-    <style nonce="{{ $cspNonce ?? '' }}">
-        :root {
-            --brand-primary: #0284c7;
-            --brand-primary-dark: #0369a1;
-            --brand-accent: #38bdf8;
-            --brand-dark: #090d16;
-            --brand-border: #e2e8f0;
-        }
+@extends('layouts.admin')
 
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f1f5f9;
-            color: #1e293b;
-        }
+@section('title', 'Dashboard Administrativo')
 
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
+@section('breadcrumbs')
+    <li class="breadcrumb-item active" aria-current="page">Dashboard Administrativo</li>
+@endsection
 
-        .navbar-cms {
-            background-color: #090d16 !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+@section('content')
 
-        .stat-card-cms {
-            background: #ffffff;
-            border: 1px solid var(--brand-border);
-            border-radius: 1rem;
-            padding: 1.25rem 1.5rem;
-            box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
-            transition: all 0.2s ease;
-        }
-
-        .stat-card-cms:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.08);
-        }
-
-        .stat-icon-cms {
-            width: 46px;
-            height: 46px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.35rem;
-        }
-
-        .nav-pills-cms .nav-link {
-            color: #475569;
-            font-weight: 600;
-            padding: 0.65rem 1.15rem;
-            border-radius: 0.75rem;
-            transition: all 0.15s ease;
-        }
-
-        .nav-pills-cms .nav-link.active {
-            background-color: var(--brand-primary);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
-        }
-
-        .table-cms {
-            background: #ffffff;
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
-            border: 1px solid var(--brand-border);
-        }
-
-        .table-cms th {
-            background-color: #f8fafc;
-            color: #475569;
-            font-weight: 700;
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.85rem 1rem;
-            border-bottom: 1px solid var(--brand-border);
-        }
-
-        .table-cms td {
-            padding: 0.85rem 1rem;
-            vertical-align: middle;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .badge-role {
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            padding: 0.35rem 0.75rem;
-            border-radius: 9999px;
-        }
-
-        .chat-console {
-            background: #0f172a;
-            border-radius: 1rem;
-            color: #e2e8f0;
-            overflow: hidden;
-        }
-    </style>
-</head>
-<body class="min-vh-100 d-flex flex-column">
-
-    <!-- Navbar CMS -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-cms sticky-top py-3">
-        <div class="container-fluid px-lg-4">
-            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{{ route('dashboard') }}">
-                <span class="p-2 rounded-3 bg-primary text-white d-inline-flex align-items-center justify-content-center shadow-sm">
-                    <i class="bi bi-boxes"></i>
-                </span>
-                <span class="fs-5 tracking-tight text-white">INBOT <span class="text-info fw-normal">CMS</span></span>
-            </a>
-
-            <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
-                <a href="{{ route('facturas.compra.lista') }}" class="btn btn-primary btn-sm px-3 fw-semibold">
-                    <i class="bi bi-truck me-1"></i> Facturas Compra
-                </a>
-                <a href="{{ route('ventas.lista') }}" class="btn btn-success btn-sm px-3 fw-semibold">
-                    <i class="bi bi-receipt me-1"></i> Módulo Ventas
-                </a>
-                <a href="{{ route('home') }}" class="btn btn-outline-light btn-sm px-3" target="_blank">
-                    <i class="bi bi-box-arrow-up-right me-1"></i> Catálogo Público
-                </a>
-
-                @php
-                    $userRole = auth()->user()->role ?? 'user';
-                    $roleBadgeClass = match($userRole) {
-                        'admin' => 'bg-danger text-white',
-                        'bodeguero' => 'bg-primary text-white',
-                        'vendedor' => 'bg-success text-white',
-                        default => 'bg-secondary text-white'
-                    };
-                @endphp
-
-                <div class="d-none d-md-flex align-items-center gap-2 text-white">
-                    <i class="bi bi-person-circle text-info fs-5"></i>
+    <!-- HERO / BANNER DE BIENVENIDA CON COLOR CARACTERÍSTICO DEL ROL -->
+    <div class="card card-cms mb-4 border-0 shadow-sm overflow-hidden" style="background: linear-gradient(135deg, {{ auth()->user()->role_color }} 0%, #090d16 100%);">
+        <div class="card-body p-4 text-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center bg-white bg-opacity-20 shadow">
+                        <i class="bi {{ auth()->user()->role_icon }} fs-2 text-white"></i>
+                    </div>
                     <div>
-                        <div class="small fw-bold lh-1">{{ auth()->user()->name }}</div>
-                        <span class="badge {{ $roleBadgeClass }} badge-role mt-1">{{ strtoupper($userRole) }}</span>
+                        <div class="badge bg-white text-dark fw-bold mb-1 shadow-sm">
+                            <i class="bi {{ auth()->user()->role_icon }} me-1" style="color: {{ auth()->user()->role_color }};"></i>
+                            {{ auth()->user()->role_title }}
+                        </div>
+                        <h3 class="fw-bold mb-1 text-white">¡Bienvenido(a), {{ auth()->user()->name }}!</h3>
+                        <p class="mb-0 text-white-50 small">
+                            {{ $companySettings->nombre_comercial ?? 'INBOT SYSTEM' }} &bull; NIT: {{ $companySettings->nit ?? '901.849.201-3' }} &bull; Turno: {{ date('d M, Y') }}
+                        </p>
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('logout') }}" class="m-0">
-                    @csrf
-                    <button type="submit" class="btn btn-danger btn-sm px-3 fw-semibold">
-                        <i class="bi bi-box-arrow-right me-1"></i> Salir
-                    </button>
-                </form>
+                <div class="d-flex gap-2 flex-wrap">
+                    @if(auth()->user()->isVendedor() || auth()->user()->isAdmin())
+                        <a href="{{ route('ventas.lista') }}" class="btn btn-success fw-bold px-3 py-2 shadow-sm">
+                            <i class="bi bi-cart-check-fill me-1"></i> Módulo Ventas
+                        </a>
+                    @endif
+                    @if(auth()->user()->isBodeguero() || auth()->user()->isAdmin())
+                        <a href="{{ route('facturas.compra.lista') }}" class="btn btn-primary fw-bold px-3 py-2 shadow-sm">
+                            <i class="bi bi-truck me-1"></i> Facturas Compra
+                        </a>
+                    @endif
+                </div>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- Contenido Principal -->
-    <main class="container-fluid px-lg-4 py-4 flex-grow-1">
-
-        <!-- Notificaciones Flash -->
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-check-circle-fill fs-5 text-success"></i>
-                <div>{{ session('success') }}</div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- ======================================================== -->
+    <!-- SECCIÓN PRIORITARIA 1: CMS DE NOTICIAS Y COMUNICADOS     -->
+    <!-- ======================================================== -->
+    <div class="mb-4" id="seccionNews">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-0 text-body">
+                    <i class="bi bi-megaphone-fill text-primary me-2"></i> Comunicados y Noticias Internas (CMS)
+                </h5>
+                <span class="text-muted small">Publicaciones administrativas dirigidas a tu perfil operativo.</span>
             </div>
-        @endif
+            @if(auth()->user()->isAdmin())
+                <button class="btn btn-primary btn-sm px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaNoticia">
+                    <i class="bi bi-plus-circle me-1"></i> Nuevo Comunicado
+                </button>
+            @endif
+        </div>
 
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
-                <div>{{ session('error') }}</div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="row g-3">
+            @forelse($pinnedNews ?? [] as $n)
+                @php
+                    $priorityClass = match($n->priority ?? 'normal') {
+                        'urgente' => 'badge-priority-urgente',
+                        'alta' => 'badge-priority-alta',
+                        'baja' => 'badge-priority-baja',
+                        default => 'badge-priority-normal',
+                    };
+                @endphp
+                <div class="col-md-6 col-lg-4">
+                    <div class="card card-cms h-100 shadow-sm border-top-0 role-border-accent">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge {{ $priorityClass }} text-uppercase" style="font-size: 0.68rem;">
+                                    <i class="bi bi-flag-fill me-1"></i> {{ $n->priority ?? 'Normal' }}
+                                </span>
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 0.68rem;">
+                                    {{ strtoupper($n->category ?? 'General') }}
+                                </span>
+                            </div>
+                            <h6 class="fw-bold text-body mb-2 text-truncate" title="{{ $n->title }}">{{ $n->title }}</h6>
+                            <p class="text-muted small flex-grow-1 mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ $n->excerpt ?? Str::limit(strip_tags($n->content), 90) }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary border-opacity-10 small text-muted">
+                                <span><i class="bi bi-calendar3 me-1"></i> {{ $n->created_at->format('d/m/Y') }}</span>
+                                <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalVerNoticia{{ $n->id }}">
+                                    Leer <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Ver Noticia -->
+                <div class="modal fade" id="modalVerNoticia{{ $n->id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content card-cms border-0 shadow">
+                            <div class="modal-header border-bottom">
+                                <div>
+                                    <span class="badge {{ $priorityClass }} text-uppercase mb-1">{{ $n->priority }}</span>
+                                    <h5 class="modal-title fw-bold text-body mb-0">{{ $n->title }}</h5>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="mb-3 text-muted small d-flex gap-3">
+                                    <span><i class="bi bi-person me-1"></i> Publicado por: <b>{{ $n->author->name ?? 'Administración' }}</b></span>
+                                    <span><i class="bi bi-calendar-event me-1"></i> {{ $n->created_at->format('d/m/Y H:i') }}</span>
+                                </div>
+                                <div class="text-body lh-base">
+                                    {!! nl2br(e($n->content)) !!}
+                                </div>
+                            </div>
+                            <div class="modal-footer border-top bg-light">
+                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-12">
+                    <div class="p-4 text-center bg-light rounded-3 border text-muted">
+                        <i class="bi bi-bell-slash fs-3 d-block mb-1"></i>
+                        No hay comunicados urgentes para tu rol en este momento.
+                    </div>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SECCIÓN PRIORITARIA 2: VITRINA / CATÁLOGO DESTACADO      -->
+    <!-- ======================================================== -->
+    <div class="mb-4" id="seccionProductos">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-0 text-body">
+                    <i class="bi bi-grid-fill text-success me-2"></i> Vitrina de Catálogo y Existencias
+                </h5>
+                <span class="text-muted small">Consulta rápida de existencias, código de barras y precios de venta.</span>
             </div>
-        @endif
+            <a href="#pane-inventario" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('tab-inventario').click();">
+                Ver Tabla Completa <i class="bi bi-arrow-down-short"></i>
+            </a>
+        </div>
 
-        @if($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0" role="alert">
-                <div class="fw-bold mb-1"><i class="bi bi-exclamation-circle-fill me-1"></i> Por favor corrige los siguientes errores:</div>
-                <ul class="mb-0 small ps-3">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+        <div class="row g-3">
+            @foreach($productos->take(4) as $p)
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card card-cms h-100 shadow-sm border p-3">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            @if($p->image_url)
+                                <img src="{{ $p->image_url }}" alt="{{ $p->nombre }}" class="rounded-3 border object-fit-cover" style="width: 52px; height: 52px;">
+                            @else
+                                <div class="rounded-3 bg-secondary-subtle d-flex align-items-center justify-content-center text-muted" style="width: 52px; height: 52px;">
+                                    <i class="bi bi-box-seam fs-4"></i>
+                                </div>
+                            @endif
+                            <div class="overflow-hidden">
+                                <div class="fw-bold text-body small text-truncate" title="{{ $p->nombre }}">{{ $p->nombre }}</div>
+                                <span class="badge bg-light text-dark border mono" style="font-size: 0.7rem;">{{ $p->codigo_barras }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <div>
+                                <small class="text-muted d-block" style="font-size: 0.72rem;">Precio Venta</small>
+                                <span class="mono fw-bold text-success fs-6">${{ number_format($p->precio_venta, 2) }}</span>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block" style="font-size: 0.72rem;">Disponible</small>
+                                <span class="badge {{ $p->stock_actual <= $p->stock_minimo ? 'bg-danger text-white' : 'bg-primary-subtle text-primary-emphasis' }} mono">
+                                    {{ $p->stock_actual }} uds
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
 
-        <!-- Tarjetas de Resumen General (Métricas Clave) -->
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-xl-3">
-                <div class="stat-card-cms d-flex align-items-center gap-3">
-                    <div class="stat-icon-cms bg-primary-subtle text-primary">
+    <!-- Tarjetas de Resumen General (Métricas Clave) -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="stat-card-cms d-flex align-items-center gap-3">
+                <div class="stat-icon-cms bg-primary-subtle text-primary">
                         <i class="bi bi-box-seam-fill"></i>
                     </div>
                     <div>
@@ -915,11 +902,85 @@
             </div>
 
         </div>
-    </main>
-
     <!-- ======================================================== -->
     <!-- MODALES DE OPERACIÓN                                     -->
     <!-- ======================================================== -->
+
+    <!-- Modal: Nueva Noticia / Comunicado CMS -->
+    @if(auth()->user()->isAdmin())
+    <div class="modal fade" id="modalNuevaNoticia" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content rounded-4 border-0 card-cms shadow">
+                <form action="{{ route('admin.news.store') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header border-bottom">
+                        <h5 class="modal-title fw-bold text-body">
+                            <i class="bi bi-megaphone-fill me-2 text-primary"></i> Publicar Nuevo Comunicado Interno
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body row g-3 p-4">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Título del Comunicado *</label>
+                            <input type="text" name="title" class="form-control" required placeholder="Ej: Nuevo procedimiento de inventarios y recepción">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Categoría</label>
+                            <select name="category" class="form-select">
+                                <option value="comunicado">Comunicado General</option>
+                                <option value="procedimiento">Procedimiento Operativo</option>
+                                <option value="alerta">Alerta de Seguridad / Inventario</option>
+                                <option value="mantenimiento">Mantenimiento Programado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Nivel de Prioridad</label>
+                            <select name="priority" class="form-select">
+                                <option value="normal">Normal (Informativo)</option>
+                                <option value="alta">Alta (Atención Requerida)</option>
+                                <option value="urgente">Urgente (Lectura Inmediata)</option>
+                                <option value="baja">Baja</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Destinatarios (Rol)</label>
+                            <select name="target_role" class="form-select">
+                                <option value="todos">Todos los Empleados</option>
+                                <option value="vendedor">Solo Cajeros / Ventas</option>
+                                <option value="bodeguero">Solo Bodegueros / Almacén</option>
+                                <option value="admin">Solo Administradores</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Resumen Breve (Extracto Opcional)</label>
+                            <input type="text" name="excerpt" class="form-control" placeholder="Breve descripción que se verá en la tarjeta...">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Contenido Detallado *</label>
+                            <textarea name="content" class="form-control" rows="5" required placeholder="Escribe el cuerpo completo del comunicado oficial..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Imagen Adjunta (Opcional)</label>
+                            <input type="file" name="file" class="form-control form-control-sm" accept="image/*">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center gap-3 pt-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="pinned" value="1" id="checkPinned" checked>
+                                <label class="form-check-label small fw-semibold" for="checkPinned">Fijar en el Dashboard Principal</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top bg-light">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm">
+                            <i class="bi bi-send-fill me-1"></i> Publicar en el Sistema
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Modal: Nuevo Producto -->
     <div class="modal fade" id="modalNuevoProducto" tabindex="-1">
@@ -1351,7 +1412,9 @@
     </div>
     @endif
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+@endsection
+
+@push('scripts')
     <script nonce="{{ $cspNonce ?? '' }}">
         let onlyLowStock = false;
 
@@ -1493,5 +1556,4 @@
             }
         }
     </script>
-</body>
-</html>
+@endpush

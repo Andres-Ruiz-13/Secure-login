@@ -19,12 +19,16 @@ class NewsController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'title'     => ['required', 'string', 'max:255'],
-            'excerpt'   => ['nullable', 'string', 'max:500'],
-            'content'   => ['required', 'string'],
-            'media_id'  => ['nullable', 'exists:media,id'],
-            'file'      => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
-            'published' => ['nullable', 'boolean'],
+            'title'       => ['required', 'string', 'max:255'],
+            'excerpt'     => ['nullable', 'string', 'max:500'],
+            'content'     => ['required', 'string'],
+            'category'    => ['nullable', 'string', 'max:50'],
+            'priority'    => ['nullable', 'string', 'max:20'],
+            'target_role' => ['nullable', 'string', 'max:50'],
+            'pinned'      => ['nullable', 'boolean'],
+            'media_id'    => ['nullable', 'exists:media,id'],
+            'file'        => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+            'published'   => ['nullable', 'boolean'],
         ]);
 
         $mediaId = $validated['media_id'] ?? null;
@@ -53,12 +57,17 @@ class NewsController extends Controller
         }
 
         News::create([
-            'title'     => $validated['title'],
-            'slug'      => $slug,
-            'excerpt'   => $validated['excerpt'] ?? Str::limit(strip_tags($validated['content']), 140),
-            'content'   => $validated['content'],
-            'media_id'  => $mediaId,
-            'published' => $request->boolean('published', true),
+            'title'       => $validated['title'],
+            'slug'        => $slug,
+            'excerpt'     => $validated['excerpt'] ?? Str::limit(strip_tags($validated['content']), 140),
+            'content'     => $validated['content'],
+            'category'    => $validated['category'] ?? 'comunicado',
+            'priority'    => $validated['priority'] ?? 'normal',
+            'target_role' => $validated['target_role'] ?? 'todos',
+            'pinned'      => $request->boolean('pinned', false),
+            'media_id'    => $mediaId,
+            'author_id'   => $request->user()?->id,
+            'published'   => $request->boolean('published', true),
         ]);
 
         return redirect()

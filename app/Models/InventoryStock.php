@@ -45,3 +45,4 @@ class InventoryStock extends Model
         return $query->where('stock_actual', '<=', 0);
     }
 }
+

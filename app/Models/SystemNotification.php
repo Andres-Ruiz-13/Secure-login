@@ -47,3 +47,4 @@ class SystemNotification extends Model
         return $query->where('is_read', false);
     }
 }
+

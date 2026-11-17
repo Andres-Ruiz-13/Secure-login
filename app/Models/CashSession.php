@@ -61,3 +61,4 @@ class CashSession extends Model
         return $query->where('estado', 'abierta');
     }
 }
+
